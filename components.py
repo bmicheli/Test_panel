@@ -9,6 +9,30 @@ import base64
 from dash_iconify import DashIconify
 from config import *
 
+def create_hpo_suggestions_card():
+    """Create HPO suggestions card between confidence filter and HPO search"""
+    return dbc.Card([
+        dbc.CardBody([
+            html.Div([
+                html.Label([
+                    DashIconify(icon="mdi:lightbulb", width=14, className="me-1"),
+                    "Suggested HPO Terms"
+                ], className="fw-bold text-primary", style={"fontSize": "13px"}),
+                html.Small([
+                    DashIconify(icon="mdi:information", width=10, className="me-1"),
+                    "Based on selected panel keywords"
+                ], className="text-muted d-block", style={"fontSize": "11px", "marginBottom": "8px"}),
+                
+                # Container for suggested HPO terms (will be populated by callback)
+                html.Div(id="hpo-suggestions-container", children=[
+                    html.Div("Select panels to see HPO suggestions", 
+                           className="text-muted text-center", 
+                           style={"fontSize": "12px", "fontStyle": "italic", "padding": "10px"})
+                ])
+            ])
+        ], style={"padding": "1rem"})
+    ], className="glass-card mb-3 fade-in-up")
+
 def create_header():
     """Create the modern header component with glass morphism"""
     return html.Div([
@@ -120,7 +144,7 @@ def create_panel_selection_card():
     ], className="glass-card mb-3 fade-in-up")
 
 def create_options_card():
-    """Create options and filters card - NO TITLE"""
+    """Create options and filters card - WITH NEW HPO SUGGESTIONS"""
     return dbc.Card([
         dbc.CardBody([
             dbc.Row([
@@ -159,6 +183,21 @@ def create_options_card():
                             inline=False,
                             style={"fontSize": "13px"}
                         )
+                    ], className="mb-3"),  # Added margin for separation
+                    
+                    # NEW HPO SUGGESTIONS SECTION
+                    html.Label([
+                        DashIconify(icon="mdi:lightbulb", width=14, className="me-1"),
+                        "Suggested HPO Terms"
+                    ], className="fw-bold text-primary", style={"fontSize": "13px"}),
+                    html.Small([
+                        DashIconify(icon="mdi:information", width=10, className="me-1"),
+                        "Based on selected panel keywords"
+                    ], className="text-muted d-block", style={"fontSize": "11px", "marginBottom": "8px"}),
+                    html.Div(id="hpo-suggestions-container", children=[
+                        html.Div("Select panels to see HPO suggestions", 
+                               className="text-muted text-center", 
+                               style={"fontSize": "12px", "fontStyle": "italic", "padding": "10px"})
                     ], className="mb-2")
                 ], width=4),
                 dbc.Col([
@@ -195,7 +234,7 @@ def create_options_card():
             ])
         ], style={"padding": "1rem"})
     ], className="glass-card mb-3 fade-in-up")
-
+	
 def create_action_buttons():
     """Create action buttons with spacing - IMPORT BUTTON REMOVED"""
     return dbc.Card([
