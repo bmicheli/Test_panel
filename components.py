@@ -119,7 +119,7 @@ def create_panel_selection_card():
     ], className="glass-card mb-3 fade-in-up")
 
 def create_options_card():
-    """Create options and filters card - WITH HPO SUGGESTIONS BETWEEN CONFIDENCE AND HPO TERMS"""
+    """Create options and filters card - HPO SUGGESTIONS AS SEPARATE COLUMN AT SAME LEVEL"""
     return dbc.Card([
         dbc.CardBody([
             dbc.Row([
@@ -133,14 +133,14 @@ def create_options_card():
                         placeholder="Enter gene symbols, one per line...",
                         style={
                             "width": "100%", 
-                            "height": "60px",  # REDUCED from 100px to 60px
+                            "height": "65px", 
                             "borderRadius": "8px",
                             "border": "1px solid rgba(0, 188, 212, 0.3)",
                             "fontSize": "13px"
                         },
                         className="mb-2"
                     )
-                ], width=3),  # REDUCED from width=4 to width=3
+                ], width=2),  # FURTHER REDUCED to width=2
                 dbc.Col([
                     # CONFIDENCE LEVEL FILTER
                     html.Label([
@@ -159,9 +159,10 @@ def create_options_card():
                             inline=False,
                             style={"fontSize": "13px"}
                         )
-                    ], className="mb-3"),
-                    
-                    # HPO SUGGESTIONS - POSITIONED BETWEEN CONFIDENCE AND HPO TERMS
+                    ])
+                ], width=2),  # ADJUSTED width
+                dbc.Col([
+                    # HPO SUGGESTIONS - NOW AT SAME LEVEL AS OTHER BLOCKS
                     html.Label([
                         DashIconify(icon="mdi:lightbulb", width=14, className="me-1"),
                         "HPO Suggestions"
@@ -174,7 +175,7 @@ def create_options_card():
                         html.Div("Select panels to see HPO suggestions", 
                                className="text-muted text-center", 
                                style={"fontSize": "12px", "fontStyle": "italic", "padding": "10px"})
-                    ], className="mb-2", style={
+                    ], style={
                         "maxHeight": "120px",
                         "overflowY": "auto",
                         "border": "1px solid rgba(0, 188, 212, 0.2)",
@@ -182,7 +183,7 @@ def create_options_card():
                         "padding": "8px",
                         "backgroundColor": "rgba(248, 249, 250, 0.8)"
                     })
-                ], width=5),  # INCREASED from width=4 to width=5
+                ], width=4),  # DEDICATED width for HPO suggestions
                 dbc.Col([
                     html.Label([
                         DashIconify(icon="mdi:magnify", width=14, className="me-1"),
@@ -213,11 +214,10 @@ def create_options_card():
                             }
                         )
                     ], style={"display": "flex", "alignItems": "center"})
-                ], width=4)
+                ], width=3)  # ADJUSTED width for HPO Terms
             ])
         ], style={"padding": "1rem"})
     ], className="glass-card mb-3 fade-in-up")
-
 def create_interactive_hpo_suggestion_card(hpo_term, keyword):
     """Create an individual HPO suggestion card with accept/reject buttons"""
     return html.Div([
