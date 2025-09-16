@@ -70,6 +70,7 @@ def create_sidebar():
         ]
     )
 
+# NO TITLES FOR BOXES
 def create_panel_selection_card():
     """Create panel selection card - NO TITLE"""
     return dbc.Card([
@@ -119,11 +120,10 @@ def create_panel_selection_card():
     ], className="glass-card mb-3 fade-in-up")
 
 def create_options_card():
-    """Create options and filters card - WITH SMALLER MANUAL GENES AND HPO SUGGESTIONS"""
+    """Create options and filters card - NO TITLE"""
     return dbc.Card([
         dbc.CardBody([
             dbc.Row([
-                # MANUAL GENES - REDUCED SIZE
                 dbc.Col([
                     html.Label([
                         DashIconify(icon="mdi:text-box-plus", width=14, className="me-1"),
@@ -134,16 +134,14 @@ def create_options_card():
                         placeholder="Enter gene symbols, one per line...",
                         style={
                             "width": "100%", 
-                            "height": "60px",  # REDUCED FROM 100px to 60px
+                            "height": "100px",
                             "borderRadius": "8px",
                             "border": "1px solid rgba(0, 188, 212, 0.3)",
-                            "fontSize": "12px"  # SLIGHTLY SMALLER FONT
+                            "fontSize": "13px"
                         },
                         className="mb-2"
                     )
-                ], width=2),  # REDUCED FROM width=4 to width=2
-                
-                # CONFIDENCE FILTER
+                ], width=4),
                 dbc.Col([
                     html.Label([
                         DashIconify(icon="mdi:filter", width=14, className="me-1"),
@@ -162,26 +160,7 @@ def create_options_card():
                             style={"fontSize": "13px"}
                         )
                     ], className="mb-2")
-                ], width=3),
-                
-                # NEW HPO SUGGESTIONS SECTION - BETWEEN CONFIDENCE AND HPO TERMS
-                dbc.Col([
-                    html.Label([
-                        DashIconify(icon="mdi:lightbulb", width=14, className="me-1"),
-                        "Suggested HPO Terms"
-                    ], className="fw-bold text-primary", style={"fontSize": "13px"}),
-                    html.Small([
-                        DashIconify(icon="mdi:information", width=10, className="me-1"),
-                        "Based on selected panel keywords"
-                    ], className="text-muted d-block", style={"fontSize": "11px", "marginBottom": "8px"}),
-                    html.Div(id="hpo-suggestions-container", children=[
-                        html.Div("Select panels to see HPO suggestions", 
-                               className="text-muted text-center", 
-                               style={"fontSize": "12px", "fontStyle": "italic", "padding": "10px"})
-                    ], className="mb-2")
-                ], width=3),
-                
-                # HPO TERMS DROPDOWN
+                ], width=4),
                 dbc.Col([
                     html.Label([
                         DashIconify(icon="mdi:magnify", width=14, className="me-1"),

@@ -26,6 +26,7 @@ from config import *
 # =============================================================================
 
 def fetch_panels(base_url):
+    """Fetch list of panels from a PanelApp instance (UK or Australia)"""
     panels = []
     url = f"{base_url}panels/"
     
@@ -45,6 +46,7 @@ def fetch_panels(base_url):
     return pd.DataFrame(panels)
 
 def fetch_panel_genes(base_url, panel_id):
+    """Fetch gene list for a specific panel ID with detailed gene information"""
     url = f"{base_url}panels/{panel_id}/"
     response = requests.get(url, timeout=10)
     if response.status_code != 200:
@@ -121,118 +123,6 @@ def fetch_hpo_term_details_cached(term_id):
 def fetch_panel_disorders_cached(base_url, panel_id):
     """Cached version of panel disorders fetching"""
     return fetch_panel_disorders(base_url, panel_id)
-
-# =============================================================================
-# NOUVELLES FONCTIONS POUR LES SUGGESTIONS HPO
-# =============================================================================
-
-def extract_keywords_from_panel_names(panel_names):
-    """Extract relevant medical keywords from panel names for HPO suggestion"""
-    import re
-    
-    # Medical keywords that are likely to have corresponding HPO terms
-    medical_keywords = []
-    
-    for name in panel_names:
-        if not name:
-            continue
-            
-        # Clean the panel name
-        cleaned_name = name.lower()
-        
-        # Remove common non-medical words and patterns
-        stop_words = ['panel', 'gene', 'genes', 'list', 'testing', 'analysis', 'v1', 'v2', 'v3', 
-                     'version', 'updated', 'comprehensive', 'extended', 'broad', 'focused',
-                     'clinical', 'diagnostic', 'genomic', 'inherited', 'familial', 'congenital',
-                     'syndrome', 'syndromes', 'disorder', 'disorders', 'disease', 'diseases',
-                     'condition', 'conditions', 'defect', 'defects', 'abnormality', 'abnormalities']
-        
-        # Extract meaningful medical terms (remove punctuation and split)
-        words = re.findall(r'\b[a-zA-Z]{3,}\b', cleaned_name)
-        
-        for word in words:
-            if (word not in stop_words and 
-                len(word) >= 4 and  # Minimum length for medical terms
-                not word.isdigit()):
-                medical_keywords.append(word.capitalize())
-    
-    # Remove duplicates while preserving order
-    unique_keywords = list(dict.fromkeys(medical_keywords))
-    
-    return unique_keywords[:10]  # Limit to 10 keywords for API efficiency
-
-def search_hpo_terms_by_keywords(keywords, rejected_hpos=None, max_per_keyword=3):
-    """Search HPO terms based on medical keywords, excluding rejected ones"""
-    if not keywords:
-        return []
-    
-    rejected_hpos = rejected_hpos or []
-    suggested_hpo_terms = []
-    
-    for keyword in keywords:
-        try:
-            # Search HPO terms for each keyword
-            url = f"https://ontology.jax.org/api/hp/search?q={keyword}&page=0&limit=10"
-            response = requests.get(url, timeout=5)
-            
-            if response.status_code == 200:
-                data = response.json()
-                terms_found = 0
-                
-                if 'terms' in data:
-                    for term in data['terms']:
-                        if terms_found >= max_per_keyword:
-                            break
-                            
-                        hpo_id = term.get('id', '')
-                        hpo_name = term.get('name', '')
-                        
-                        # Skip if already suggested, rejected, or invalid
-                        if (hpo_id and hpo_name and 
-                            hpo_id not in [t['value'] for t in suggested_hpo_terms] and
-                            hpo_id not in rejected_hpos):
-                            
-                            suggested_hpo_terms.append({
-                                "label": f"{hpo_name} ({hpo_id})",
-                                "value": hpo_id,
-                                "keyword": keyword,
-                                "name": hpo_name
-                            })
-                            terms_found += 1
-                            
-        except Exception as e:
-            logger.error(f"Error searching HPO terms for keyword '{keyword}': {e}")
-            continue
-    
-    # Sort by relevance (could be enhanced with better scoring)
-    return suggested_hpo_terms[:15]  # Return more suggestions to account for rejections
-
-def get_panel_names_from_selections(uk_ids, au_ids, internal_ids, panels_uk_df, panels_au_df, internal_panels):
-    """Extract panel names from current selections for keyword analysis"""
-    panel_names = []
-    
-    # UK panels
-    if uk_ids and panels_uk_df is not None:
-        for panel_id in uk_ids:
-            panel_row = panels_uk_df[panels_uk_df['id'] == panel_id]
-            if not panel_row.empty:
-                panel_names.append(panel_row.iloc[0]['name'])
-    
-    # AU panels
-    if au_ids and panels_au_df is not None:
-        for panel_id in au_ids:
-            panel_row = panels_au_df[panels_au_df['id'] == panel_id]
-            if not panel_row.empty:
-                panel_names.append(panel_row.iloc[0]['name'])
-    
-    # Internal panels
-    if internal_ids and internal_panels is not None:
-        for panel_id in internal_ids:
-            panel_row = internal_panels[internal_panels['panel_id'] == panel_id]
-            if not panel_row.empty:
-                panel_names.append(panel_row.iloc[0]['panel_name'].replace('_', ' '))
-    
-    return panel_names
 
 # =============================================================================
 # PARALLEL PROCESSING FUNCTIONS

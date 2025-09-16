@@ -1,3 +1,10 @@
+"""
+Main application file for PanelBuilder
+VISUAL CHANGES ONLY - KEEP ALL ORIGINAL FUNCTIONALITY
+IMPORT FUNCTIONALITY REMOVED - Z-INDEX ISSUES FIXED
+SPINNER FULL SCREEN ADDED
+"""
+
 import dash
 import dash_bootstrap_components as dbc
 from dash import html, dcc, Output, Input, State, callback_context, ALL, dash_table
@@ -15,7 +22,6 @@ import io
 import numpy as np
 import concurrent.futures
 from functools import lru_cache
-from dash_iconify import DashIconify
 
 # Import local modules
 from config import *
@@ -85,74 +91,6 @@ def initialize_panels():
     schedule_panel_refresh()
     
     logger.info(f"Initialization completed in {time.time() - start_time:.2f} seconds")
-
-# =============================================================================
-# HELPER FUNCTION FOR HPO SUGGESTIONS
-# =============================================================================
-
-def create_single_hpo_suggestion(suggestion, current_index, total_suggestions, keywords):
-    """Create a single HPO suggestion with approve/reject buttons"""
-    return html.Div([
-        # Suggestion card
-        dbc.Card([
-            dbc.CardBody([
-                html.Div([
-                    # HPO Term info
-                    html.Div([
-                        html.H6(suggestion["name"], 
-                               className="mb-1", 
-                               style={"fontSize": "14px", "fontWeight": "600", "color": "#2c3e50"}),
-                        html.Small(suggestion["value"], 
-                                  className="text-muted", 
-                                  style={"fontSize": "11px"}),
-                        html.Br(),
-                        html.Small(f"From keyword: {suggestion['keyword']}", 
-                                  className="text-info", 
-                                  style={"fontSize": "10px", "fontStyle": "italic"})
-                    ], style={"flex": "1"}),
-                    
-                    # Action buttons
-                    html.Div([
-                        dbc.Button([
-                            DashIconify(icon="mdi:check", width=16)
-                        ],
-                        id="approve-hpo-btn",
-                        color="success",
-                        size="sm",
-                        className="me-2",
-                        style={"width": "35px", "height": "35px", "borderRadius": "50%"},
-                        title="Add to HPO Terms"
-                        ),
-                        dbc.Button([
-                            DashIconify(icon="mdi:close", width=16)
-                        ],
-                        id="reject-hpo-btn", 
-                        color="danger",
-                        size="sm",
-                        style={"width": "35px", "height": "35px", "borderRadius": "50%"},
-                        title="Skip this suggestion"
-                        )
-                    ], style={"display": "flex", "alignItems": "center"})
-                ], style={"display": "flex", "alignItems": "center", "justifyContent": "space-between"})
-            ], style={"padding": "12px"})
-        ], style={
-            "border": "1px solid rgba(0, 188, 212, 0.3)",
-            "borderRadius": "8px",
-            "backgroundColor": "rgba(0, 188, 212, 0.05)",
-            "marginBottom": "10px"
-        }),
-        
-        # Progress and keywords info
-        html.Div([
-            html.Small(f"Suggestion {current_index + 1} of {total_suggestions}", 
-                      className="text-muted", 
-                      style={"fontSize": "10px"}),
-            html.Br(),
-            html.Small(f"Keywords: {', '.join(keywords)}", 
-                      className="text-muted", 
-                      style={"fontSize": "10px", "fontStyle": "italic"})
-        ], style={"textAlign": "center"})
-    ])
 
 # =============================================================================
 # APP INITIALIZATION
@@ -273,13 +211,7 @@ app.layout = dbc.Container([
         ]
     ),
 
-    # NOUVEAU: Store pour gérer l'état du spinner
-    dcc.Store(id="spinner-store", data={"loading": False}),
-    
-    # NOUVEAUX STORES POUR LES SUGGESTIONS HPO
-    dcc.Store(id="current-hpo-suggestions", data=[]),  # Toutes les suggestions disponibles
-    dcc.Store(id="current-suggestion-index", data=0),   # Index de la suggestion courante
-    dcc.Store(id="rejected-hpo-store", data=[]),        # HPO terms rejetés
+
     
     # Sidebar
     create_sidebar(),
@@ -447,6 +379,7 @@ def apply_preset(n_clicks_list, current_hpo_options):
 # CALLBACKS - HPO MANAGEMENT (ORIGINAL)
 # =============================================================================
 
+
 @app.callback(
     Output("hpo-search-dropdown", "value", allow_duplicate=True),
     Output("hpo-search-dropdown", "options", allow_duplicate=True),
@@ -457,7 +390,9 @@ def apply_preset(n_clicks_list, current_hpo_options):
     prevent_initial_call=True
 )
 def auto_generate_hpo_from_panels_preview(au_ids, current_hpo_values, current_hpo_options):
+    # SOLUTION: Vérifier si au_ids est vide dès le début
     if not au_ids:
+        # Ne pas afficher de spinner et retourner les valeurs actuelles
         return current_hpo_values or [], current_hpo_options or [], html.Div()
     
     panel_hpo_terms = get_hpo_terms_from_panels(uk_ids=None, au_ids=au_ids)
@@ -519,223 +454,30 @@ def update_hpo_options(search_value, current_values, current_options):
     return all_options
 
 # =============================================================================
-# NOUVEAUX CALLBACKS - SUGGESTIONS HPO
+# CALLBACKS - SPINNER MANAGEMENT (OPTIMISÉ PYTHON PUR)
 # =============================================================================
 
 @app.callback(
-    [Output("current-hpo-suggestions", "data"),
-     Output("current-suggestion-index", "data"),
-     Output("hpo-suggestions-container", "children", allow_duplicate=True)],
-    [Input("dropdown-uk", "value"),
-     Input("dropdown-au", "value"), 
-     Input("dropdown-internal", "value")],
-    [State("rejected-hpo-store", "data")],
-    prevent_initial_call=True
-)
-def update_hpo_suggestions_pool(uk_ids, au_ids, internal_ids, rejected_hpos):
-    """Generate pool of HPO suggestions and display the first one"""
-    
-    # Check if any panels are selected
-    if not any([uk_ids, au_ids, internal_ids]):
-        return [], 0, html.Div("Select panels to see HPO suggestions", 
-                              className="text-muted text-center", 
-                              style={"fontSize": "12px", "fontStyle": "italic", "padding": "10px"})
-    
-    try:
-        # Get panel names and extract keywords
-        panel_names = get_panel_names_from_selections(
-            uk_ids, au_ids, internal_ids, 
-            panels_uk_df, panels_au_df, internal_panels
-        )
-        
-        if not panel_names:
-            return [], 0, html.Div("No panel names found", 
-                                  className="text-muted text-center", 
-                                  style={"fontSize": "12px", "fontStyle": "italic", "padding": "10px"})
-        
-        keywords = extract_keywords_from_panel_names(panel_names)
-        
-        if not keywords:
-            return [], 0, html.Div("No relevant keywords found", 
-                                  className="text-muted text-center", 
-                                  style={"fontSize": "12px", "fontStyle": "italic", "padding": "10px"})
-        
-        # Search for HPO terms, excluding rejected ones
-        suggested_terms = search_hpo_terms_by_keywords(keywords, rejected_hpos)
-        
-        if not suggested_terms:
-            return [], 0, html.Div("No HPO suggestions found", 
-                                  className="text-muted text-center", 
-                                  style={"fontSize": "12px", "fontStyle": "italic", "padding": "10px"})
-        
-        # Display the first suggestion
-        first_suggestion = suggested_terms[0]
-        suggestion_component = create_single_hpo_suggestion(first_suggestion, 0, len(suggested_terms), keywords[:5])
-        
-        return suggested_terms, 0, suggestion_component
-        
-    except Exception as e:
-        logger.error(f"Error generating HPO suggestions: {e}")
-        return [], 0, html.Div("Error generating suggestions", 
-                              className="text-muted text-center", 
-                              style={"fontSize": "12px", "color": "#dc3545", "padding": "10px"})
-
-@app.callback(
-    [Output("hpo-search-dropdown", "value", allow_duplicate=True),
-     Output("hpo-search-dropdown", "options", allow_duplicate=True),
-     Output("current-suggestion-index", "data", allow_duplicate=True),
-     Output("hpo-suggestions-container", "children", allow_duplicate=True)],
-    Input("approve-hpo-btn", "n_clicks"),
-    [State("current-hpo-suggestions", "data"),
-     State("current-suggestion-index", "data"),
-     State("hpo-search-dropdown", "value"),
-     State("hpo-search-dropdown", "options")],
-    prevent_initial_call=True
-)
-def approve_hpo_suggestion(n_clicks, all_suggestions, current_index, current_hpo_values, current_hpo_options):
-    """Handle HPO suggestion approval - add to dropdown and show next suggestion"""
-    if not n_clicks or not all_suggestions:
-        raise dash.exceptions.PreventUpdate
-    
-    if current_index >= len(all_suggestions):
-        raise dash.exceptions.PreventUpdate
-    
-    # Get current suggestion
-    current_suggestion = all_suggestions[current_index]
-    hpo_id = current_suggestion["value"]
-    
-    # Initialize current values and options
-    current_values = current_hpo_values or []
-    current_options = current_hpo_options or []
-    
-    # Add to HPO dropdown if not already present
-    new_values = current_values.copy()
-    new_options = current_options.copy()
-    
-    if hpo_id not in current_values:
-        new_values.append(hpo_id)
-    
-    # Add option if not already present
-    existing_option_values = [opt["value"] for opt in current_options]
-    if hpo_id not in existing_option_values:
-        new_options.append({
-            "label": current_suggestion["label"],
-            "value": hpo_id
-        })
-    
-    # Move to next suggestion
-    next_index = current_index + 1
-    
-    # Create next suggestion component
-    if next_index < len(all_suggestions):
-        next_suggestion = all_suggestions[next_index]
-        keywords = list(set([s["keyword"] for s in all_suggestions[:5]]))  # Extract keywords
-        next_component = create_single_hpo_suggestion(next_suggestion, next_index, len(all_suggestions), keywords)
-    else:
-        # No more suggestions
-        next_component = html.Div([
-            html.Div([
-                DashIconify(icon="mdi:check-circle", width=24, className="me-2", style={"color": "#28a745"}),
-                "All suggestions reviewed!"
-            ], className="text-success text-center", style={"fontSize": "14px", "fontWeight": "600", "padding": "15px"}),
-            html.Small("Select different panels to get new suggestions.", 
-                      className="text-muted text-center d-block", 
-                      style={"fontSize": "11px"})
-        ])
-    
-    return new_values, new_options, next_index, next_component
-
-@app.callback(
-    [Output("rejected-hpo-store", "data", allow_duplicate=True),
-     Output("current-suggestion-index", "data", allow_duplicate=True),
-     Output("hpo-suggestions-container", "children", allow_duplicate=True)],
-    Input("reject-hpo-btn", "n_clicks"),
-    [State("current-hpo-suggestions", "data"),
-     State("current-suggestion-index", "data"),
-     State("rejected-hpo-store", "data")],
-    prevent_initial_call=True
-)
-def reject_hpo_suggestion(n_clicks, all_suggestions, current_index, rejected_hpos):
-    """Handle HPO suggestion rejection - add to rejected list and show next suggestion"""
-    if not n_clicks or not all_suggestions:
-        raise dash.exceptions.PreventUpdate
-    
-    if current_index >= len(all_suggestions):
-        raise dash.exceptions.PreventUpdate
-    
-    # Add current suggestion to rejected list
-    current_suggestion = all_suggestions[current_index]
-    rejected_hpos = rejected_hpos or []
-    
-    if current_suggestion["value"] not in rejected_hpos:
-        rejected_hpos.append(current_suggestion["value"])
-    
-    # Move to next suggestion
-    next_index = current_index + 1
-    
-    # Create next suggestion component
-    if next_index < len(all_suggestions):
-        next_suggestion = all_suggestions[next_index]
-        keywords = list(set([s["keyword"] for s in all_suggestions[:5]]))
-        next_component = create_single_hpo_suggestion(next_suggestion, next_index, len(all_suggestions), keywords)
-    else:
-        # No more suggestions
-        next_component = html.Div([
-            html.Div([
-                DashIconify(icon="mdi:check-circle", width=24, className="me-2", style={"color": "#28a745"}),
-                "All suggestions reviewed!"
-            ], className="text-success text-center", style={"fontSize": "14px", "fontWeight": "600", "padding": "15px"}),
-            html.Small("Select different panels to get new suggestions.", 
-                      className="text-muted text-center d-block", 
-                      style={"fontSize": "11px"})
-        ])
-    
-    return rejected_hpos, next_index, next_component
-
-@app.callback(
-    Output("rejected-hpo-store", "data", allow_duplicate=True),
-    [Input("dropdown-uk", "value"),
-     Input("dropdown-au", "value"), 
-     Input("dropdown-internal", "value")],
-    prevent_initial_call=True
-)
-def reset_rejected_hpos_on_panel_change(uk_ids, au_ids, internal_ids):
-    """Reset rejected HPO terms when panels change"""
-    return []
-
-# =============================================================================
-# CALLBACKS - SPINNER MANAGEMENT (NOUVEAU)
-# =============================================================================
-
-@app.callback(
-    Output("spinner-store", "data"),
+    Output("fullscreen-spinner", "className", allow_duplicate=True),
     Input("load-genes-btn", "n_clicks"),
     prevent_initial_call=True
 )
-def start_loading(n_clicks):
-    """Démarre le spinner quand on clique sur Build Panel"""
+def show_spinner_immediately(n_clicks):
+    """Affiche le spinner immédiatement quand on clique sur Build Panel"""
     if n_clicks:
-        return {"loading": True}
-    return {"loading": False}
+        return "fullscreen-spinner-overlay"
+    return "fullscreen-spinner-overlay hide"
 
 @app.callback(
-    Output("fullscreen-spinner", "className"),
-    Input("spinner-store", "data"),
-    Input("gene-table-output", "children"),  # Se déclenche quand le traitement est fini
+    Output("fullscreen-spinner", "className", allow_duplicate=True),
+    Input("gene-table-output", "children"),
     prevent_initial_call=True
 )
-def toggle_spinner(spinner_data, gene_table_content):
-    """Contrôle l'affichage du spinner"""
-    ctx = callback_context
-    if not ctx.triggered:
+def hide_spinner_when_done(gene_table_content):
+    """Masque le spinner quand les résultats sont affichés"""
+    if gene_table_content and gene_table_content != "":
         return "fullscreen-spinner-overlay hide"
-    
-    trigger_id = ctx.triggered[0]["prop_id"].split(".")[0]
-    
-    if trigger_id == "spinner-store" and spinner_data.get("loading"):
-        return "fullscreen-spinner-overlay"
-    else:
-        return "fullscreen-spinner-overlay hide"
+    return dash.no_update
 
 # =============================================================================
 # CALLBACKS - UI MANAGEMENT (ORIGINAL - IMPORT REMOVED)
@@ -761,7 +503,7 @@ def toggle_code_visibility(n_build, n_reset):
     return dash.no_update, dash.no_update
 
 # =============================================================================
-# CALLBACKS - RESET (UPDATED WITH NEW HPO STORES)
+# CALLBACKS - RESET (ORIGINAL - IMPORT REMOVED)
 # =============================================================================
 
 @app.callback(
@@ -776,10 +518,7 @@ def toggle_code_visibility(n_build, n_reset):
      Output("venn-container", "children"),
      Output("hpo-terms-table-container", "children"),
      Output("gene-list-store", "data"),
-     Output("panel-summary-output", "value"),
-     Output("rejected-hpo-store", "data"),
-     Output("current-hpo-suggestions", "data"),  
-     Output("current-suggestion-index", "data")],
+     Output("panel-summary-output", "value")],
     Input("reset-btn", "n_clicks"),
     prevent_initial_call=True
 )
@@ -787,8 +526,7 @@ def handle_reset(n_reset):
     if not n_reset:
         raise dash.exceptions.PreventUpdate
 
-    return (None, None, None, [3, 2], "", [], [], "", "", "", [], "", 
-            [], [], 0)
+    return None, None, None, [3, 2], "", [], [], "", "", "", [], ""
 
 # =============================================================================
 # CALLBACKS - MAIN PANEL PROCESSING (ORIGINAL WITH GENE SEARCH + SPINNER)
@@ -802,8 +540,7 @@ def handle_reset(n_reset):
      Output("hpo-search-dropdown", "value", allow_duplicate=True),
      Output("hpo-search-dropdown", "options", allow_duplicate=True),
      Output("panel-summary-output", "value", allow_duplicate=True),
-     Output("gene-data-store", "data", allow_duplicate=True),
-     Output("spinner-store", "data", allow_duplicate=True)],
+     Output("gene-data-store", "data", allow_duplicate=True)],
     Input("load-genes-btn", "n_clicks"),
     State("dropdown-uk", "value"),
     State("dropdown-au", "value"),
@@ -817,9 +554,9 @@ def handle_reset(n_reset):
 def display_panel_genes_optimized(n_clicks, selected_uk_ids, selected_au_ids, 
                                 selected_internal_ids, selected_confidences, 
                                 manual_genes, selected_hpo_terms, current_hpo_options):
-    """OPTIMIZED version of the main callback with ORIGINAL FUNCTIONALITY + SPINNER"""
+    """OPTIMIZED version of the main callback with ORIGINAL FUNCTIONALITY"""
     if not n_clicks:
-        return "", "", "", [], [], [], "", {}, {"loading": False}
+        return "", "", "", [], [], [], "", {}
 
     start_time = time.time()
     print(f"Building panel with {len(selected_uk_ids or [])} UK, {len(selected_au_ids or [])} AU, {len(selected_internal_ids or [])} internal panels...")
@@ -926,7 +663,7 @@ def display_panel_genes_optimized(n_clicks, selected_uk_ids, selected_au_ids,
             panel_versions["Manual"] = None
 
     if not genes_combined:
-        return "No gene found.", "", "", [], all_hpo_terms, updated_hpo_options, "", {}, {"loading": False}
+        return "No gene found.", "", "", [], all_hpo_terms, updated_hpo_options, "", {}
 
     # FAST GENE PROCESSING
     df_all = pd.concat(genes_combined, ignore_index=True)
@@ -936,7 +673,7 @@ def display_panel_genes_optimized(n_clicks, selected_uk_ids, selected_au_ids,
     df_all = df_all[df_all["gene_symbol"].notna() & (df_all["gene_symbol"] != "")]
     
     if df_all.empty:
-        return "No valid genes found.", "", "", [], all_hpo_terms, updated_hpo_options, "", {}, {"loading": False}
+        return "No valid genes found.", "", "", [], all_hpo_terms, updated_hpo_options, "", {}
     
     # Fast deduplication
     df_unique = deduplicate_genes_fast(df_all)
@@ -1271,8 +1008,7 @@ def display_panel_genes_optimized(n_clicks, selected_uk_ids, selected_au_ids,
         all_hpo_terms,       
         updated_hpo_options,
         "",  # Clear panel summary
-        tables_by_level,
-        {"loading": False})  # NOUVEAU: éteindre le spinner à la fin du traitement
+        tables_by_level)
 
 # =============================================================================
 # CALLBACKS - GENE SEARCH (KEEP ORIGINAL)
@@ -1391,6 +1127,14 @@ def export_gene_list(n_clicks, gene_list, uk_ids, au_ids, internal_ids, manual_g
         
         content = "\n".join(sorted(gene_list))
         
+        return dcc.send_string(content, filename)
+    
+    raise dash.exceptions.PreventUpdate
+
+# =============================================================================
+# CLIENTSIDE CALLBACKS FOR UX (ORIGINAL - KEEP CLIPBOARD FUNCTIONALITY)
+# =============================================================================
+
 app.clientside_callback(
     """
     function(panel_summary) {
