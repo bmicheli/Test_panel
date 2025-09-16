@@ -3,6 +3,7 @@ Main application file for PanelBuilder
 VISUAL CHANGES ONLY - KEEP ALL ORIGINAL FUNCTIONALITY
 IMPORT FUNCTIONALITY REMOVED - Z-INDEX ISSUES FIXED
 SPINNER FULL SCREEN ADDED
+HPO SUGGESTIONS INTERACTIVES ADDED
 """
 
 import dash
@@ -191,7 +192,7 @@ app.index_string = f'''
 initialize_panels()
 
 # =============================================================================
-# APP LAYOUT - IMPORT SECTION REMOVED + SPINNER ADDED
+# APP LAYOUT - AVEC LES NOUVEAUX STORES
 # =============================================================================
 
 app.layout = dbc.Container([
@@ -211,8 +212,6 @@ app.layout = dbc.Container([
         ]
     ),
 
-
-    
     # Sidebar
     create_sidebar(),
     
@@ -287,155 +286,20 @@ app.layout = dbc.Container([
         ]
     ),
     
-    # Data stores (keep original)
+    # Data stores (keep original + new stores)
     dcc.Store(id="gene-list-store"),
     dcc.Store(id="gene-data-store"),
+    # NOUVEAUX STORES POUR LES SUGGESTIONS HPO
+    dcc.Store(id="rejected-hpo-store", data=[]),
+    dcc.Store(id="suggestion-counter-store", data=0),
     
 ], fluid=True, style={
     "minHeight": "100vh",
     "background": "linear-gradient(135deg, #00BCD4 0%, #4DD0E1 50%, #80E5A3 100%)"
 })
 
-
-
-@app.callback(
-    Output("hpo-suggestions-container", "children"),
-    [Input("dropdown-uk", "value"),
-     Input("dropdown-au", "value"),
-     Input("dropdown-internal", "value")],
-    prevent_initial_call=True
-)
-def update_hpo_suggestions(uk_ids, au_ids, internal_ids):
-    """Generate HPO term suggestions based on selected panel keywords"""
-    
-    # Check if any panels are selected
-    if not any([uk_ids, au_ids, internal_ids]):
-        return html.Div("Select panels to see HPO suggestions", 
-                       className="text-muted text-center", 
-                       style={"fontSize": "12px", "fontStyle": "italic", "padding": "10px"})
-    
-    try:
-        # Get panel names from current selections
-        panel_names = get_panel_names_from_selections(
-            uk_ids, au_ids, internal_ids, 
-            panels_uk_df, panels_au_df, internal_panels
-        )
-        
-        if not panel_names:
-            return html.Div("No panel names found", 
-                           className="text-muted text-center", 
-                           style={"fontSize": "12px", "fontStyle": "italic", "padding": "10px"})
-        
-        # Extract keywords from panel names
-        keywords = extract_keywords_from_panel_names(panel_names)
-        
-        if not keywords:
-            return html.Div("No relevant keywords found", 
-                           className="text-muted text-center", 
-                           style={"fontSize": "12px", "fontStyle": "italic", "padding": "10px"})
-        
-        # Search for HPO terms based on keywords
-        suggested_terms = search_hpo_terms_by_keywords(keywords)
-        
-        if not suggested_terms:
-            return html.Div("No HPO suggestions found", 
-                           className="text-muted text-center", 
-                           style={"fontSize": "12px", "fontStyle": "italic", "padding": "10px"})
-        
-        # Create suggestion buttons
-        suggestion_buttons = []
-        for term in suggested_terms:
-            button = dbc.Button(
-                [
-                    html.Small(term["label"], style={"fontSize": "10px"}),
-                    html.Br(),
-                    html.Small(f"(from: {term['keyword']})", 
-                             style={"fontSize": "9px", "fontStyle": "italic", "opacity": "0.7"})
-                ],
-                id={"type": "hpo-suggestion-btn", "hpo_id": term["value"]},
-                color="light",
-                size="sm",
-                className="me-1 mb-1",
-                style={
-                    "fontSize": "10px",
-                    "padding": "4px 6px",
-                    "border": "1px solid rgba(0, 188, 212, 0.3)",
-                    "borderRadius": "6px",
-                    "backgroundColor": "rgba(0, 188, 212, 0.05)"
-                },
-                n_clicks=0
-            )
-            suggestion_buttons.append(button)
-        
-        return html.Div([
-            html.Div(suggestion_buttons, style={"display": "flex", "flexWrap": "wrap", "gap": "4px"}),
-            html.Div([
-                html.Small(f"Keywords: {', '.join(keywords[:5])}{'...' if len(keywords) > 5 else ''}", 
-                          className="text-muted", 
-                          style={"fontSize": "10px", "fontStyle": "italic"})
-            ], style={"marginTop": "8px"})
-        ])
-        
-    except Exception as e:
-        logger.error(f"Error generating HPO suggestions: {e}")
-        return html.Div("Error generating suggestions", 
-                       className="text-muted text-center", 
-                       style={"fontSize": "12px", "fontStyle": "italic", "padding": "10px", "color": "#dc3545"})
-
-
-
-@app.callback(
-    [Output("hpo-search-dropdown", "value", allow_duplicate=True),
-     Output("hpo-search-dropdown", "options", allow_duplicate=True)],
-    Input({"type": "hpo-suggestion-btn", "hpo_id": ALL}, "n_clicks"),
-    [State("hpo-search-dropdown", "value"),
-     State("hpo-search-dropdown", "options")],
-    prevent_initial_call=True
-)
-def add_suggested_hpo_term(n_clicks_list, current_hpo_values, current_hpo_options):
-    """Add selected HPO suggestion to the main HPO dropdown"""
-    ctx = callback_context
-    
-    if not ctx.triggered or all(n == 0 for n in n_clicks_list):
-        raise dash.exceptions.PreventUpdate
-    
-    # Find which button was clicked
-    button_id = ctx.triggered[0]["prop_id"].split(".")[0]
-    hpo_id = json.loads(button_id)["hpo_id"]
-    
-    # Initialize current values and options if None
-    current_values = current_hpo_values or []
-    current_options = current_hpo_options or []
-    
-    # Check if HPO term is already selected
-    if hpo_id in current_values:
-        return current_values, current_options
-    
-    # Check if HPO term option already exists
-    existing_option_values = [opt["value"] for opt in current_options]
-    if hpo_id not in existing_option_values:
-        # Fetch the HPO term details and add it to options
-        try:
-            hpo_details = fetch_hpo_term_details_cached(hpo_id)
-            new_option = {
-                "label": f"{hpo_details['name']} ({hpo_details['id']})",
-                "value": hpo_details['id']
-            }
-            current_options.append(new_option)
-        except Exception as e:
-            logger.error(f"Error fetching details for HPO term {hpo_id}: {e}")
-            # Add basic option even if details fetch fails
-            current_options.append({
-                "label": f"{hpo_id} (Details unavailable)",
-                "value": hpo_id
-            })
-    
-    # Add the HPO term to selected values
-    new_values = current_values + [hpo_id]
-    
-    return new_values, current_options
 # =============================================================================
-# CALLBACKS - KEEP ALL ORIGINAL FUNCTIONALITY
+# CALLBACKS - DROPDOWN OPTIONS (ORIGINAL)
 # =============================================================================
 
 @app.callback(
@@ -517,7 +381,6 @@ def apply_preset(n_clicks_list, current_hpo_options):
 # CALLBACKS - HPO MANAGEMENT (ORIGINAL)
 # =============================================================================
 
-
 @app.callback(
     Output("hpo-search-dropdown", "value", allow_duplicate=True),
     Output("hpo-search-dropdown", "options", allow_duplicate=True),
@@ -592,6 +455,193 @@ def update_hpo_options(search_value, current_values, current_options):
     return all_options
 
 # =============================================================================
+# NOUVEAUX CALLBACKS POUR LES SUGGESTIONS HPO INTERACTIVES
+# =============================================================================
+
+@app.callback(
+    Output("interactive-hpo-suggestions-container", "children"),
+    [Input("dropdown-uk", "value"),
+     Input("dropdown-au", "value"),
+     Input("dropdown-internal", "value"),
+     Input("rejected-hpo-store", "data"),
+     Input("suggestion-counter-store", "data")],
+    [State("hpo-search-dropdown", "value")],
+    prevent_initial_call=True
+)
+def update_interactive_hpo_suggestions(uk_ids, au_ids, internal_ids, rejected_hpo_terms, 
+                                     counter, current_hpo_values):
+    """Generate interactive HPO term suggestions with accept/reject functionality"""
+    
+    # Check if any panels are selected
+    if not any([uk_ids, au_ids, internal_ids]):
+        return html.Div("Select panels to see HPO suggestions", 
+                       className="text-muted text-center", 
+                       style={"fontSize": "12px", "fontStyle": "italic", "padding": "10px"})
+    
+    try:
+        # Get panel names from current selections
+        panel_names = get_panel_names_from_selections(
+            uk_ids, au_ids, internal_ids, 
+            panels_uk_df, panels_au_df, internal_panels
+        )
+        
+        if not panel_names:
+            return html.Div("No panel names found", 
+                           className="text-muted text-center", 
+                           style={"fontSize": "12px", "fontStyle": "italic", "padding": "10px"})
+        
+        # Extract keywords from panel names
+        keywords = extract_keywords_from_panel_names(panel_names)
+        
+        if not keywords:
+            return html.Div("No relevant keywords found", 
+                           className="text-muted text-center", 
+                           style={"fontSize": "12px", "fontStyle": "italic", "padding": "10px"})
+        
+        # Search for HPO terms based on keywords
+        suggested_terms = search_hpo_terms_by_keywords(keywords, max_per_keyword=1)
+        
+        # Filter out rejected terms and already selected terms
+        rejected_hpo_terms = rejected_hpo_terms or []
+        current_hpo_values = current_hpo_values or []
+        
+        filtered_suggestions = []
+        for term in suggested_terms:
+            if (term["value"] not in rejected_hpo_terms and 
+                term["value"] not in current_hpo_values):
+                filtered_suggestions.append(term)
+        
+        if not filtered_suggestions:
+            return html.Div([
+                html.Div("No new HPO suggestions available", 
+                        className="text-muted text-center", 
+                        style={"fontSize": "11px", "fontStyle": "italic"}),
+                html.Div([
+                    dbc.Button(
+                        [DashIconify(icon="mdi:refresh", width=12, className="me-1"), "Reset"],
+                        id="reset-hpo-suggestions-btn",
+                        color="link",
+                        size="sm",
+                        style={"fontSize": "10px", "padding": "2px 4px"},
+                        n_clicks=0
+                    )
+                ], style={"textAlign": "center", "marginTop": "5px"})
+            ], style={"padding": "10px"})
+        
+        # Create suggestion cards (limit to 3 at a time for better UX)
+        suggestion_cards = []
+        for term in filtered_suggestions[:3]:
+            card = create_interactive_hpo_suggestion_card(
+                {
+                    "id": term["value"],
+                    "name": term["label"].split(" (")[0]  # Extract name without ID
+                },
+                term["keyword"]
+            )
+            suggestion_cards.append(card)
+        
+        return html.Div(suggestion_cards)
+        
+    except Exception as e:
+        logger.error(f"Error generating interactive HPO suggestions: {e}")
+        return html.Div("Error generating suggestions", 
+                       className="text-muted text-center", 
+                       style={"fontSize": "12px", "fontStyle": "italic", "padding": "10px", "color": "#dc3545"})
+
+@app.callback(
+    [Output("hpo-search-dropdown", "value", allow_duplicate=True),
+     Output("hpo-search-dropdown", "options", allow_duplicate=True),
+     Output("suggestion-counter-store", "data", allow_duplicate=True)],
+    Input({"type": "hpo-accept-btn", "hpo_id": ALL, "keyword": ALL}, "n_clicks"),
+    [State("hpo-search-dropdown", "value"),
+     State("hpo-search-dropdown", "options"),
+     State("suggestion-counter-store", "data")],
+    prevent_initial_call=True
+)
+def handle_hpo_accept(n_clicks_list, current_hpo_values, current_hpo_options, counter):
+    """Handle HPO suggestion acceptance - add to HPO dropdown and trigger refresh"""
+    ctx = callback_context
+    
+    if not ctx.triggered or all(n == 0 for n in n_clicks_list):
+        raise dash.exceptions.PreventUpdate
+    
+    # Find which accept button was clicked
+    button_id = ctx.triggered[0]["prop_id"].split(".")[0]
+    hpo_data = json.loads(button_id)
+    hpo_id = hpo_data["hpo_id"]
+    
+    # Initialize current values and options if None
+    current_values = current_hpo_values or []
+    current_options = current_hpo_options or []
+    
+    # Check if HPO term is already selected
+    if hpo_id in current_values:
+        return current_values, current_options, counter + 1
+    
+    # Check if HPO term option already exists
+    existing_option_values = [opt["value"] for opt in current_options]
+    if hpo_id not in existing_option_values:
+        # Fetch the HPO term details and add it to options
+        try:
+            hpo_details = fetch_hpo_term_details_cached(hpo_id)
+            new_option = {
+                "label": f"{hpo_details['name']} ({hpo_details['id']})",
+                "value": hpo_details['id']
+            }
+            current_options.append(new_option)
+        except Exception as e:
+            logger.error(f"Error fetching details for HPO term {hpo_id}: {e}")
+            # Add basic option even if details fetch fails
+            current_options.append({
+                "label": f"{hpo_id} (Details unavailable)",
+                "value": hpo_id
+            })
+    
+    # Add the HPO term to selected values
+    new_values = current_values + [hpo_id]
+    
+    return new_values, current_options, counter + 1
+
+@app.callback(
+    [Output("rejected-hpo-store", "data", allow_duplicate=True),
+     Output("suggestion-counter-store", "data", allow_duplicate=True)],
+    Input({"type": "hpo-reject-btn", "hpo_id": ALL, "keyword": ALL}, "n_clicks"),
+    [State("rejected-hpo-store", "data"),
+     State("suggestion-counter-store", "data")],
+    prevent_initial_call=True
+)
+def handle_hpo_reject(n_clicks_list, rejected_hpo_terms, counter):
+    """Handle HPO suggestion rejection - add to rejected list and trigger refresh"""
+    ctx = callback_context
+    
+    if not ctx.triggered or all(n == 0 for n in n_clicks_list):
+        raise dash.exceptions.PreventUpdate
+    
+    # Find which reject button was clicked
+    button_id = ctx.triggered[0]["prop_id"].split(".")[0]
+    hpo_data = json.loads(button_id)
+    hpo_id = hpo_data["hpo_id"]
+    
+    # Add to rejected list
+    rejected_hpo_terms = rejected_hpo_terms or []
+    if hpo_id not in rejected_hpo_terms:
+        rejected_hpo_terms.append(hpo_id)
+    
+    return rejected_hpo_terms, counter + 1
+
+@app.callback(
+    [Output("rejected-hpo-store", "data", allow_duplicate=True),
+     Output("suggestion-counter-store", "data", allow_duplicate=True)],
+    Input("reset-hpo-suggestions-btn", "n_clicks"),
+    prevent_initial_call=True
+)
+def reset_hpo_suggestions(n_clicks):
+    """Reset HPO suggestions - clear rejected list"""
+    if n_clicks:
+        return [], 0
+    raise dash.exceptions.PreventUpdate
+
+# =============================================================================
 # CALLBACKS - SPINNER MANAGEMENT (OPTIMISÉ PYTHON PUR)
 # =============================================================================
 
@@ -641,7 +691,7 @@ def toggle_code_visibility(n_build, n_reset):
     return dash.no_update, dash.no_update
 
 # =============================================================================
-# CALLBACKS - RESET (ORIGINAL - IMPORT REMOVED)
+# CALLBACKS - RESET (AVEC LES NOUVEAUX STORES)
 # =============================================================================
 
 @app.callback(
@@ -656,15 +706,17 @@ def toggle_code_visibility(n_build, n_reset):
      Output("venn-container", "children"),
      Output("hpo-terms-table-container", "children"),
      Output("gene-list-store", "data"),
-     Output("panel-summary-output", "value")],
+     Output("panel-summary-output", "value"),
+     Output("rejected-hpo-store", "data", allow_duplicate=True),
+     Output("suggestion-counter-store", "data", allow_duplicate=True)],
     Input("reset-btn", "n_clicks"),
     prevent_initial_call=True
 )
-def handle_reset(n_reset):
+def handle_reset_with_hpo_stores(n_reset):
     if not n_reset:
         raise dash.exceptions.PreventUpdate
 
-    return None, None, None, [3, 2], "", [], [], "", "", "", [], ""
+    return None, None, None, [3, 2], "", [], [], "", "", "", [], "", [], 0
 
 # =============================================================================
 # CALLBACKS - MAIN PANEL PROCESSING (ORIGINAL WITH GENE SEARCH + SPINNER)

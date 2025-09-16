@@ -9,30 +9,6 @@ import base64
 from dash_iconify import DashIconify
 from config import *
 
-def create_hpo_suggestions_card():
-    """Create HPO suggestions card between confidence filter and HPO search"""
-    return dbc.Card([
-        dbc.CardBody([
-            html.Div([
-                html.Label([
-                    DashIconify(icon="mdi:lightbulb", width=14, className="me-1"),
-                    "Suggested HPO Terms"
-                ], className="fw-bold text-primary", style={"fontSize": "13px"}),
-                html.Small([
-                    DashIconify(icon="mdi:information", width=10, className="me-1"),
-                    "Based on selected panel keywords"
-                ], className="text-muted d-block", style={"fontSize": "11px", "marginBottom": "8px"}),
-                
-                # Container for suggested HPO terms (will be populated by callback)
-                html.Div(id="hpo-suggestions-container", children=[
-                    html.Div("Select panels to see HPO suggestions", 
-                           className="text-muted text-center", 
-                           style={"fontSize": "12px", "fontStyle": "italic", "padding": "10px"})
-                ])
-            ])
-        ], style={"padding": "1rem"})
-    ], className="glass-card mb-3 fade-in-up")
-
 def create_header():
     """Create the modern header component with glass morphism"""
     return html.Div([
@@ -94,7 +70,6 @@ def create_sidebar():
         ]
     )
 
-# NO TITLES FOR BOXES
 def create_panel_selection_card():
     """Create panel selection card - NO TITLE"""
     return dbc.Card([
@@ -144,7 +119,7 @@ def create_panel_selection_card():
     ], className="glass-card mb-3 fade-in-up")
 
 def create_options_card():
-    """Create options and filters card - WITH NEW HPO SUGGESTIONS"""
+    """Create options and filters card - WITH HPO SUGGESTIONS BETWEEN CONFIDENCE AND HPO TERMS"""
     return dbc.Card([
         dbc.CardBody([
             dbc.Row([
@@ -158,15 +133,16 @@ def create_options_card():
                         placeholder="Enter gene symbols, one per line...",
                         style={
                             "width": "100%", 
-                            "height": "100px",
+                            "height": "60px",  # REDUCED from 100px to 60px
                             "borderRadius": "8px",
                             "border": "1px solid rgba(0, 188, 212, 0.3)",
                             "fontSize": "13px"
                         },
                         className="mb-2"
                     )
-                ], width=4),
+                ], width=3),  # REDUCED from width=4 to width=3
                 dbc.Col([
+                    # CONFIDENCE LEVEL FILTER
                     html.Label([
                         DashIconify(icon="mdi:filter", width=14, className="me-1"),
                         "Confidence Level Filter"
@@ -183,23 +159,30 @@ def create_options_card():
                             inline=False,
                             style={"fontSize": "13px"}
                         )
-                    ], className="mb-3"),  # Added margin for separation
+                    ], className="mb-3"),
                     
-                    # NEW HPO SUGGESTIONS SECTION
+                    # HPO SUGGESTIONS - POSITIONED BETWEEN CONFIDENCE AND HPO TERMS
                     html.Label([
                         DashIconify(icon="mdi:lightbulb", width=14, className="me-1"),
-                        "Suggested HPO Terms"
+                        "HPO Suggestions"
                     ], className="fw-bold text-primary", style={"fontSize": "13px"}),
                     html.Small([
                         DashIconify(icon="mdi:information", width=10, className="me-1"),
-                        "Based on selected panel keywords"
+                        "Based on selected panels"
                     ], className="text-muted d-block", style={"fontSize": "11px", "marginBottom": "8px"}),
-                    html.Div(id="hpo-suggestions-container", children=[
+                    html.Div(id="interactive-hpo-suggestions-container", children=[
                         html.Div("Select panels to see HPO suggestions", 
                                className="text-muted text-center", 
                                style={"fontSize": "12px", "fontStyle": "italic", "padding": "10px"})
-                    ], className="mb-2")
-                ], width=4),
+                    ], className="mb-2", style={
+                        "maxHeight": "120px",
+                        "overflowY": "auto",
+                        "border": "1px solid rgba(0, 188, 212, 0.2)",
+                        "borderRadius": "6px",
+                        "padding": "8px",
+                        "backgroundColor": "rgba(248, 249, 250, 0.8)"
+                    })
+                ], width=5),  # INCREASED from width=4 to width=5
                 dbc.Col([
                     html.Label([
                         DashIconify(icon="mdi:magnify", width=14, className="me-1"),
@@ -234,7 +217,69 @@ def create_options_card():
             ])
         ], style={"padding": "1rem"})
     ], className="glass-card mb-3 fade-in-up")
-	
+
+def create_interactive_hpo_suggestion_card(hpo_term, keyword):
+    """Create an individual HPO suggestion card with accept/reject buttons"""
+    return html.Div([
+        html.Div([
+            # HPO term info
+            html.Div([
+                html.Strong(hpo_term["name"], 
+                           style={"fontSize": "11px", "display": "block", "marginBottom": "2px"}),
+                html.Small(f"{hpo_term['id']} (from: {keyword})", 
+                          style={"fontSize": "9px", "color": "#6c757d", "fontStyle": "italic"})
+            ], style={"flex": "1", "marginRight": "8px"}),
+            
+            # Action buttons
+            html.Div([
+                dbc.Button(
+                    DashIconify(icon="mdi:check", width=12),
+                    id={"type": "hpo-accept-btn", "hpo_id": hpo_term["id"], "keyword": keyword},
+                    color="success",
+                    size="sm",
+                    className="me-1",
+                    style={
+                        "width": "24px",
+                        "height": "24px",
+                        "padding": "0",
+                        "display": "flex",
+                        "alignItems": "center",
+                        "justifyContent": "center",
+                        "borderRadius": "4px"
+                    },
+                    title="Add to HPO Terms",
+                    n_clicks=0
+                ),
+                dbc.Button(
+                    DashIconify(icon="mdi:close", width=12),
+                    id={"type": "hpo-reject-btn", "hpo_id": hpo_term["id"], "keyword": keyword},
+                    color="danger",
+                    size="sm",
+                    style={
+                        "width": "24px",
+                        "height": "24px",
+                        "padding": "0",
+                        "display": "flex",
+                        "alignItems": "center",
+                        "justifyContent": "center",
+                        "borderRadius": "4px"
+                    },
+                    title="Reject suggestion",
+                    n_clicks=0
+                )
+            ], style={"display": "flex", "alignItems": "center"})
+        ], style={
+            "display": "flex", 
+            "alignItems": "center", 
+            "backgroundColor": "white",
+            "border": "1px solid rgba(0, 188, 212, 0.3)",
+            "borderRadius": "6px",
+            "padding": "6px 8px",
+            "marginBottom": "4px",
+            "boxShadow": "0 1px 3px rgba(0,0,0,0.1)"
+        })
+    ], id=f"hpo-suggestion-{hpo_term['id']}")
+
 def create_action_buttons():
     """Create action buttons with spacing - IMPORT BUTTON REMOVED"""
     return dbc.Card([
@@ -257,7 +302,6 @@ def create_action_buttons():
         ], style={"padding": "1rem"})
     ], className="glass-card mb-3 fade-in-up")
 
-# KEEP ALL ORIGINAL FUNCTIONALITY - ONLY VISUAL CHANGES
 def generate_panel_pie_chart(panel_df, panel_name, version=None):
     """Generate pie chart with ORIGINAL FUNCTIONALITY - ONLY VISUAL CHANGES"""
     panel_df = panel_df[panel_df['confidence_level'] != 0].copy()

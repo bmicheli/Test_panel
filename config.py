@@ -36,14 +36,14 @@ PANELAPP_AU_BASE = "https://panelapp-aus.org/api/v1/"
 PANEL_PRESETS = {
 	"neurodevelopmental": {
         "name": "Neurodevelopmental Disorders",
-        "icon": "", #mdi:head-cog
+        "icon": "mdi:head-cog",
         "uk_panels": [285],
         "au_panels": [250],
         "internal": [8801],
         "conf": [3],
         "manual": [],
         "hpo_terms": [] 
-}
+    }
 }
 
 # =============================================================================
@@ -68,7 +68,7 @@ EXTERNAL_STYLESHEETS = [
 ]
 
 # =============================================================================
-# CUSTOM CSS - ADAPTED FROM VARIANTVISUALIZER
+# CUSTOM CSS - ADAPTED FROM VARIANTVISUALIZER + HPO SUGGESTIONS
 # =============================================================================
 
 CUSTOM_CSS = '''
@@ -280,6 +280,86 @@ body {
     border-color: #00BCD4 !important;
 }
 
+/* HPO SUGGESTIONS STYLING */
+#interactive-hpo-suggestions-container {
+    max-height: 120px;
+    overflow-y: auto;
+    border: 1px solid rgba(0, 188, 212, 0.2);
+    border-radius: 6px;
+    padding: 8px;
+    background-color: rgba(248, 249, 250, 0.8);
+}
+
+/* Cartes de suggestions HPO individuelles */
+.hpo-suggestion-card {
+    display: flex;
+    align-items: center;
+    background-color: white;
+    border: 1px solid rgba(0, 188, 212, 0.3);
+    border-radius: 6px;
+    padding: 6px 8px;
+    margin-bottom: 4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    transition: all 0.2s ease;
+}
+
+.hpo-suggestion-card:hover {
+    border-color: #00BCD4;
+    box-shadow: 0 2px 6px rgba(0, 188, 212, 0.2);
+    transform: translateY(-1px);
+}
+
+/* Animation pour les nouvelles suggestions */
+@keyframes slideInFromRight {
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.hpo-suggestion-card {
+    animation: slideInFromRight 0.3s ease-out;
+}
+
+/* Boutons d'action HPO */
+.hpo-action-btn {
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.hpo-action-btn:hover {
+    transform: scale(1.1);
+}
+
+/* Scrollbar personnalisée pour les suggestions */
+#interactive-hpo-suggestions-container::-webkit-scrollbar {
+    width: 4px;
+}
+
+#interactive-hpo-suggestions-container::-webkit-scrollbar-track {
+    background: rgba(0, 188, 212, 0.1);
+    border-radius: 2px;
+}
+
+#interactive-hpo-suggestions-container::-webkit-scrollbar-thumb {
+    background: rgba(0, 188, 212, 0.5);
+    border-radius: 2px;
+}
+
+#interactive-hpo-suggestions-container::-webkit-scrollbar-thumb:hover {
+    background: #00BCD4;
+}
+
 /* HARMONIZED TYPOGRAPHY */
 h1 {
     font-size: 2rem !important;
@@ -361,6 +441,20 @@ p {
     .btn {
         font-size: 12px !important;
         padding: 0.4rem 0.8rem !important;
+    }
+    
+    #interactive-hpo-suggestions-container {
+        max-height: 100px;
+    }
+    
+    .hpo-suggestion-card {
+        padding: 4px 6px;
+        font-size: 10px;
+    }
+    
+    .hpo-action-btn {
+        width: 20px;
+        height: 20px;
     }
 }
 
