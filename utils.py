@@ -705,90 +705,116 @@ def generate_panel_summary(uk_ids, au_ids, internal_ids, confs, manual_genes_lis
 
 # Dictionnaire de mapping entre termes médicaux et HPO terms fréquents
 MEDICAL_TO_HPO_MAPPING = {
-    # Système nerveux
-    'epilepsy': ['HP:0001250', 'HP:0002197'],
-    'seizure': ['HP:0001250', 'HP:0011097'],
-    'neurodevelopmental': ['HP:0012759', 'HP:0001263'],
-    'intellectual': ['HP:0001249', 'HP:0001263'],
-    'autism': ['HP:0000717', 'HP:0012759'],
-    'microcephaly': ['HP:0000252', 'HP:0001249'],
-    'macrocephaly': ['HP:0000256', 'HP:0001250'],
-    'ataxia': ['HP:0001251', 'HP:0002066'],
-    'spasticity': ['HP:0001257', 'HP:0002061'],
-    'neuropathy': ['HP:0009830', 'HP:0000762'],
-    'muscular': ['HP:0003560', 'HP:0003198'],
-    'dystrophy': ['HP:0003560', 'HP:0003198'],
-    'myopathy': ['HP:0003198', 'HP:0009063'],
+    # Système nerveux - considérablement étendu
+    'epilepsy': ['HP:0001250', 'HP:0002197', 'HP:0011097', 'HP:0007359'],
+    'seizure': ['HP:0001250', 'HP:0011097', 'HP:0007359', 'HP:0002069'],
+    'neurodevelopmental': ['HP:0012759', 'HP:0001263', 'HP:0001249', 'HP:0000750'],
+    'intellectual': ['HP:0001249', 'HP:0001263', 'HP:0000750', 'HP:0002342'],
+    'autism': ['HP:0000717', 'HP:0012759', 'HP:0000729', 'HP:0001249'],
+    'microcephaly': ['HP:0000252', 'HP:0001249', 'HP:0002079', 'HP:0001263'],
+    'macrocephaly': ['HP:0000256', 'HP:0001250', 'HP:0002119', 'HP:0004482'],
+    'ataxia': ['HP:0001251', 'HP:0002066', 'HP:0001310', 'HP:0002070'],
+    'spasticity': ['HP:0001257', 'HP:0002061', 'HP:0001276', 'HP:0002395'],
+    'neuropathy': ['HP:0009830', 'HP:0000762', 'HP:0003477', 'HP:0007002'],
+    'muscular': ['HP:0003560', 'HP:0003198', 'HP:0009063', 'HP:0003324'],
+    'dystrophy': ['HP:0003560', 'HP:0003198', 'HP:0009063', 'HP:0003325'],
+    'myopathy': ['HP:0003198', 'HP:0009063', 'HP:0003560', 'HP:0003324'],
+    'developmental': ['HP:0012758', 'HP:0001263', 'HP:0000750', 'HP:0012759'],
+    'delay': ['HP:0012758', 'HP:0001263', 'HP:0000750', 'HP:0001270'],
+    'cognitive': ['HP:0001249', 'HP:0000750', 'HP:0002342', 'HP:0001263'],
+    'behavioral': ['HP:0000708', 'HP:0001249', 'HP:0000729', 'HP:0100716'],
+    'speech': ['HP:0000750', 'HP:0001263', 'HP:0002167', 'HP:0002465'],
+    'language': ['HP:0000750', 'HP:0001263', 'HP:0002167', 'HP:0002463'],
     
-    # Système cardiovasculaire
-    'cardiomyopathy': ['HP:0001638', 'HP:0006515'],
-    'arrhythmia': ['HP:0011675', 'HP:0001645'],
-    'cardiac': ['HP:0001627', 'HP:0001638'],
-    'heart': ['HP:0001627', 'HP:0001638'],
-    'aortic': ['HP:0002616', 'HP:0001645'],
-    'hypertrophic': ['HP:0001639', 'HP:0001638'],
-    'dilated': ['HP:0001644', 'HP:0001638'],
+    # Système cardiovasculaire - étendu
+    'cardiomyopathy': ['HP:0001638', 'HP:0006515', 'HP:0001644', 'HP:0001639'],
+    'arrhythmia': ['HP:0011675', 'HP:0001645', 'HP:0001663', 'HP:0005110'],
+    'cardiac': ['HP:0001627', 'HP:0001638', 'HP:0001629', 'HP:0001631'],
+    'heart': ['HP:0001627', 'HP:0001638', 'HP:0001629', 'HP:0001631'],
+    'aortic': ['HP:0002616', 'HP:0001645', 'HP:0001680', 'HP:0004942'],
+    'hypertrophic': ['HP:0001639', 'HP:0001638', 'HP:0006515', 'HP:0001644'],
+    'dilated': ['HP:0001644', 'HP:0001638', 'HP:0006515', 'HP:0001639'],
+    'congenital': ['HP:0001627', 'HP:0001631', 'HP:0030680', 'HP:0011968'],
     
-    # Système visuel
-    'retinal': ['HP:0000479', 'HP:0000504'],
-    'blindness': ['HP:0000618', 'HP:0000505'],
-    'vision': ['HP:0000504', 'HP:0000479'],
-    'optic': ['HP:0000648', 'HP:0000504'],
-    'cataract': ['HP:0000518', 'HP:0000479'],
-    'glaucoma': ['HP:0000501', 'HP:0000479'],
+    # Système visuel - étendu
+    'retinal': ['HP:0000479', 'HP:0000504', 'HP:0000541', 'HP:0000568'],
+    'blindness': ['HP:0000618', 'HP:0000505', 'HP:0000565', 'HP:0007663'],
+    'vision': ['HP:0000504', 'HP:0000479', 'HP:0000505', 'HP:0007663'],
+    'optic': ['HP:0000648', 'HP:0000504', 'HP:0001138', 'HP:0000543'],
+    'cataract': ['HP:0000518', 'HP:0000479', 'HP:0001596', 'HP:0007700'],
+    'glaucoma': ['HP:0000501', 'HP:0000479', 'HP:0001087', 'HP:0012632'],
+    'eye': ['HP:0000478', 'HP:0000479', 'HP:0000504', 'HP:0001098'],
+    'ocular': ['HP:0000478', 'HP:0000479', 'HP:0000504', 'HP:0001098'],
     
-    # Système auditif
-    'hearing': ['HP:0000365', 'HP:0000407'],
-    'deafness': ['HP:0000365', 'HP:0000407'],
-    'auditory': ['HP:0000364', 'HP:0000365'],
+    # Système auditif - étendu
+    'hearing': ['HP:0000365', 'HP:0000407', 'HP:0006824', 'HP:0008527'],
+    'deafness': ['HP:0000365', 'HP:0000407', 'HP:0006824', 'HP:0008527'],
+    'auditory': ['HP:0000364', 'HP:0000365', 'HP:0000407', 'HP:0006824'],
+    'sensorineural': ['HP:0000407', 'HP:0000365', 'HP:0008527', 'HP:0006824'],
     
-    # Système rénal
-    'kidney': ['HP:0000077', 'HP:0000083'],
-    'renal': ['HP:0000077', 'HP:0000083'],
-    'nephritis': ['HP:0000123', 'HP:0000077'],
-    'cystic': ['HP:0000107', 'HP:0000077'],
+    # Système rénal - étendu
+    'kidney': ['HP:0000077', 'HP:0000083', 'HP:0000107', 'HP:0000822'],
+    'renal': ['HP:0000077', 'HP:0000083', 'HP:0000107', 'HP:0000822'],
+    'nephritis': ['HP:0000123', 'HP:0000077', 'HP:0000083', 'HP:0000099'],
+    'cystic': ['HP:0000107', 'HP:0000077', 'HP:0000108', 'HP:0000003'],
+    'urinary': ['HP:0000119', 'HP:0000077', 'HP:0000014', 'HP:0008677'],
     
-    # Métabolisme
-    'diabetes': ['HP:0000819', 'HP:0001998'],
-    'obesity': ['HP:0001513', 'HP:0000819'],
-    'metabolic': ['HP:0001939', 'HP:0000819'],
-    'growth': ['HP:0001507', 'HP:0004322'],
-    'short': ['HP:0004322', 'HP:0001507'],
-    'tall': ['HP:0000098', 'HP:0001519'],
+    # Métabolisme - étendu
+    'diabetes': ['HP:0000819', 'HP:0001998', 'HP:0003074', 'HP:0005978'],
+    'obesity': ['HP:0001513', 'HP:0000819', 'HP:0004324', 'HP:0001956'],
+    'metabolic': ['HP:0001939', 'HP:0000819', 'HP:0001508', 'HP:0003234'],
+    'growth': ['HP:0001507', 'HP:0004322', 'HP:0000098', 'HP:0001519'],
+    'short': ['HP:0004322', 'HP:0001507', 'HP:0003508', 'HP:0000098'],
+    'tall': ['HP:0000098', 'HP:0001519', 'HP:0001548', 'HP:0003477'],
+    'thyroid': ['HP:0000820', 'HP:0008249', 'HP:0002926', 'HP:0000872'],
+    'endocrine': ['HP:0000818', 'HP:0000819', 'HP:0000820', 'HP:0008249'],
     
-    # Système immunitaire
-    'immune': ['HP:0002715', 'HP:0005406'],
-    'immunodeficiency': ['HP:0002721', 'HP:0005406'],
-    'autoimmune': ['HP:0002960', 'HP:0002715'],
+    # Système immunitaire - étendu
+    'immune': ['HP:0002715', 'HP:0005406', 'HP:0002721', 'HP:0002960'],
+    'immunodeficiency': ['HP:0002721', 'HP:0005406', 'HP:0002715', 'HP:0004315'],
+    'autoimmune': ['HP:0002960', 'HP:0002715', 'HP:0003493', 'HP:0005404'],
+    'infection': ['HP:0002719', 'HP:0005406', 'HP:0002721', 'HP:0004313'],
+    'inflammatory': ['HP:0002715', 'HP:0002960', 'HP:0001371', 'HP:0032169'],
     
-    # Système digestif
-    'liver': ['HP:0001392', 'HP:0001394'],
-    'hepatic': ['HP:0001392', 'HP:0001394'],
-    'pancreatic': ['HP:0001735', 'HP:0001738'],
-    'gastrointestinal': ['HP:0011024', 'HP:0002013'],
+    # Système digestif - étendu
+    'liver': ['HP:0001392', 'HP:0001394', 'HP:0002240', 'HP:0001396'],
+    'hepatic': ['HP:0001392', 'HP:0001394', 'HP:0002240', 'HP:0001396'],
+    'pancreatic': ['HP:0001735', 'HP:0001738', 'HP:0002013', 'HP:0001733'],
+    'gastrointestinal': ['HP:0011024', 'HP:0002013', 'HP:0001396', 'HP:0002019'],
+    'intestinal': ['HP:0002013', 'HP:0011024', 'HP:0002019', 'HP:0002033'],
     
-    # Développement
-    'skeletal': ['HP:0000924', 'HP:0002652'],
-    'bone': ['HP:0000924', 'HP:0002652'],
-    'facial': ['HP:0001999', 'HP:0000271'],
-    'cleft': ['HP:0000175', 'HP:0001999'],
+    # Développement - étendu
+    'skeletal': ['HP:0000924', 'HP:0002652', 'HP:0000929', 'HP:0002813'],
+    'bone': ['HP:0000924', 'HP:0002652', 'HP:0000929', 'HP:0002813'],
+    'facial': ['HP:0001999', 'HP:0000271', 'HP:0000234', 'HP:0001574'],
+    'cleft': ['HP:0000175', 'HP:0001999', 'HP:0000202', 'HP:0000179'],
+    'limb': ['HP:0040064', 'HP:0002817', 'HP:0001155', 'HP:0002813'],
+    'spine': ['HP:0002650', 'HP:0000925', 'HP:0002808', 'HP:0100360'],
     
-    # Cancer
-    'cancer': ['HP:0002664', 'HP:0030731'],
-    'tumor': ['HP:0002664', 'HP:0100633'],
-    'malignant': ['HP:0002664', 'HP:0030731'],
+    # Cancer - étendu
+    'cancer': ['HP:0002664', 'HP:0030731', 'HP:0100633', 'HP:0006725'],
+    'tumor': ['HP:0002664', 'HP:0100633', 'HP:0030731', 'HP:0006725'],
+    'malignant': ['HP:0002664', 'HP:0030731', 'HP:0100633', 'HP:0006725'],
+    'leukemia': ['HP:0001909', 'HP:0002664', 'HP:0005561', 'HP:0004808'],
+    'lymphoma': ['HP:0002665', 'HP:0002664', 'HP:0005561', 'HP:0004808'],
+    
+    # Termes génériques ajoutés
+    'syndrome': ['HP:0000707', 'HP:0000118', 'HP:0001507', 'HP:0001999'],
+    'disorder': ['HP:0000707', 'HP:0000118', 'HP:0001507', 'HP:0001999'],
+    'abnormality': ['HP:0000118', 'HP:0000707', 'HP:0001507', 'HP:0001999'],
+    'malformation': ['HP:0000118', 'HP:0000707', 'HP:0001507', 'HP:0001999'],
+    'dysplasia': ['HP:0009792', 'HP:0000118', 'HP:0000707', 'HP:0001507'],
+    'hypoplasia': ['HP:0025615', 'HP:0000118', 'HP:0000707', 'HP:0001507'],
+    'stenosis': ['HP:0011025', 'HP:0000118', 'HP:0000707', 'HP:0001507'],
 }
 
-# Mots-clés à ignorer (trop génériques ou non médicaux)
+# =============================================================================
+# 2. REMPLACER LA LISTE STOP_WORDS (plus permissive)
+# =============================================================================
+
 STOP_WORDS = {
-    'panel', 'gene', 'genes', 'list', 'testing', 'analysis', 'comprehensive',
-    'extended', 'broad', 'focused', 'clinical', 'diagnostic', 'genomic',
-    'inherited', 'familial', 'congenital', 'syndrome', 'syndromes',
-    'disorder', 'disorders', 'disease', 'diseases', 'condition', 'conditions',
-    'defect', 'defects', 'abnormality', 'abnormalities', 'version', 'updated',
-    'v1', 'v2', 'v3', 'v4', 'v5', 'australia', 'australian', 'genomics',
-    'england', 'primary', 'secondary', 'rare', 'common', 'early', 'late',
-    'onset', 'adult', 'paediatric', 'pediatric', 'childhood', 'neonatal'
+    'panel', 'gene', 'genes', 'list', 'testing', 'analysis', 
+    'version', 'v1', 'v2', 'v3', 'v4', 'v5', 'updated'
 }
 
 # =============================================================================
