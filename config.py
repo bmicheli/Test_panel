@@ -1,7 +1,7 @@
 """
 Configuration file for PanelBuilder
 Contains all constants, paths, and configuration settings
-ADAPTED FROM VARIANTVISUALIZER STYLE
+ADAPTED FROM VARIANTVISUALIZER STYLE WITH COMPACT HPO SUGGESTIONS
 """
 
 import os
@@ -68,7 +68,7 @@ EXTERNAL_STYLESHEETS = [
 ]
 
 # =============================================================================
-# CUSTOM CSS - ADAPTED FROM VARIANTVISUALIZER + HPO SUGGESTIONS
+# CUSTOM CSS - ADAPTED FROM VARIANTVISUALIZER + COMPACT HPO SUGGESTIONS
 # =============================================================================
 
 CUSTOM_CSS = '''
@@ -280,40 +280,32 @@ body {
     border-color: #00BCD4 !important;
 }
 
-/* HPO SUGGESTIONS STYLING */
-#interactive-hpo-suggestions-container {
-    max-height: 120px;
-    overflow-y: auto;
-    border: 1px solid rgba(0, 188, 212, 0.2);
-    border-radius: 6px;
-    padding: 8px;
-    background-color: rgba(248, 249, 250, 0.8);
-}
-
-/* Cartes de suggestions HPO individuelles */
-.hpo-suggestion-card {
-    display: flex;
-    align-items: center;
-    background-color: white;
-    border: 1px solid rgba(0, 188, 212, 0.3);
+/* COMPACT HPO SUGGESTIONS STYLING */
+.compact-hpo-card {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    border: 1px solid rgba(0, 188, 212, 0.4);
     border-radius: 6px;
     padding: 6px 8px;
-    margin-bottom: 4px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    margin-bottom: 3px;
+    box-shadow: 0 1px 4px rgba(0, 188, 212, 0.1);
     transition: all 0.2s ease;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    animation: slideInFromLeft 0.3s ease-out;
 }
 
-.hpo-suggestion-card:hover {
+.compact-hpo-card:hover {
+    transform: translateX(2px);
+    box-shadow: 0 2px 8px rgba(0, 188, 212, 0.2);
     border-color: #00BCD4;
-    box-shadow: 0 2px 6px rgba(0, 188, 212, 0.2);
-    transform: translateY(-1px);
 }
 
-/* Animation pour les nouvelles suggestions */
-@keyframes slideInFromRight {
+/* Animation for new compact suggestion cards */
+@keyframes slideInFromLeft {
     from {
         opacity: 0;
-        transform: translateX(20px);
+        transform: translateX(-10px);
     }
     to {
         opacity: 1;
@@ -321,140 +313,135 @@ body {
     }
 }
 
-.hpo-suggestion-card {
-    animation: slideInFromRight 0.3s ease-out;
+/* Compact suggestions container */
+#smart-hpo-suggestions-container {
+    transition: all 0.3s ease;
 }
 
-/* Boutons d'action HPO */
-.hpo-action-btn {
-    width: 24px;
-    height: 24px;
+/* Button styling for compact suggestions */
+.compact-hpo-card .btn {
+    font-weight: 500;
+    transition: all 0.2s ease;
+    border-width: 1px;
+    width: 20px;
+    height: 20px;
     padding: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 4px;
-    transition: all 0.2s ease;
 }
 
-.hpo-action-btn:hover {
+.compact-hpo-card .btn:hover {
     transform: scale(1.1);
 }
 
-/* Scrollbar personnalisée pour les suggestions */
-#interactive-hpo-suggestions-container::-webkit-scrollbar {
-    width: 4px;
+.compact-hpo-card .btn-success {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    border: none;
 }
 
-#interactive-hpo-suggestions-container::-webkit-scrollbar-track {
+.compact-hpo-card .btn-success:hover {
+    background: linear-gradient(135deg, #20c997, #17a2b8);
+    box-shadow: 0 2px 6px rgba(40, 167, 69, 0.3);
+}
+
+.compact-hpo-card .btn-outline-secondary {
+    border-color: rgba(108, 117, 125, 0.5);
+    color: #6c757d;
+    background: transparent;
+}
+
+.compact-hpo-card .btn-outline-secondary:hover {
+    background: rgba(108, 117, 125, 0.15);
+    border-color: #6c757d;
+    color: #495057;
+    box-shadow: 0 2px 6px rgba(108, 117, 125, 0.2);
+}
+
+.compact-hpo-card .btn-outline-primary {
+    border-color: rgba(0, 188, 212, 0.5);
+    color: #00BCD4;
+    background: transparent;
+}
+
+.compact-hpo-card .btn-outline-primary:hover {
+    background: rgba(0, 188, 212, 0.1);
+    border-color: #00BCD4;
+    color: #0097A7;
+    box-shadow: 0 2px 6px rgba(0, 188, 212, 0.2);
+}
+
+/* Scrollbar styling for compact suggestions container */
+#smart-hpo-suggestions-container::-webkit-scrollbar {
+    width: 3px;
+}
+
+#smart-hpo-suggestions-container::-webkit-scrollbar-track {
     background: rgba(0, 188, 212, 0.1);
     border-radius: 2px;
 }
 
-#interactive-hpo-suggestions-container::-webkit-scrollbar-thumb {
-    background: rgba(0, 188, 212, 0.5);
+#smart-hpo-suggestions-container::-webkit-scrollbar-thumb {
+    background: rgba(0, 188, 212, 0.4);
     border-radius: 2px;
 }
 
-#interactive-hpo-suggestions-container::-webkit-scrollbar-thumb:hover {
+#smart-hpo-suggestions-container::-webkit-scrollbar-thumb:hover {
     background: #00BCD4;
 }
 
-/* HARMONIZED TYPOGRAPHY */
-h1 {
-    font-size: 2rem !important;
-    font-weight: 700 !important;
+/* Remove old suggestion styles */
+.smart-hpo-card {
+    display: none;
 }
 
-h2 {
-    font-size: 1.6rem !important;
-    font-weight: 650 !important;
+#smart-hpo-suggestion-card {
+    display: none;
 }
 
-h3 {
-    font-size: 1.4rem !important;
-    font-weight: 600 !important;
+/* Loading states for compact suggestions */
+.compact-suggestion-loading {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+    border: 1px dashed rgba(0, 188, 212, 0.3);
 }
 
-h4 {
-    font-size: 1.2rem !important;
-    font-weight: 600 !important;
-}
-
-h5 {
-    font-size: 1.1rem !important;
-    font-weight: 600 !important;
-}
-
-h6 {
-    font-size: 1rem !important;
-    font-weight: 600 !important;
-}
-
-label, .form-label {
-    font-size: 13px !important;
-    font-weight: 500 !important;
-    color: #2c3e50;
-}
-
-p {
-    font-size: 13px !important;
-    line-height: 1.5 !important;
-}
-
-.text-muted {
-    font-size: 12px !important;
-    color: #6c757d !important;
-}
-
-/* CONTAINER SPACING */
-.container-fluid {
-    padding: 20px !important;
-}
-
-/* CUSTOM ANIMATIONS */
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(15px);
+@keyframes loading {
+    0% {
+        background-position: 200% 0;
     }
-    to {
-        opacity: 1;
-        transform: translateY(0);
+    100% {
+        background-position: -200% 0;
     }
 }
 
-.fade-in-up {
-    animation: fadeInUp 0.5s ease-out;
+/* Text styling for compact cards */
+.compact-hpo-card code {
+    font-size: 8px;
+    background-color: #f8f9fa;
+    padding: 1px 3px;
+    border-radius: 2px;
+    margin-right: 4px;
+    font-family: 'Courier New', monospace;
 }
 
-/* RESPONSIVE IMPROVEMENTS */
+/* Responsive adjustments for compact cards */
 @media (max-width: 768px) {
-    .app-title {
-        font-size: 1.8rem !important;
-    }
-    
-    .container-fluid {
-        padding: 12px !important;
-    }
-    
-    .btn {
-        font-size: 12px !important;
-        padding: 0.4rem 0.8rem !important;
-    }
-    
-    #interactive-hpo-suggestions-container {
-        max-height: 100px;
-    }
-    
-    .hpo-suggestion-card {
+    .compact-hpo-card {
+        height: 24px;
         padding: 4px 6px;
-        font-size: 10px;
+        font-size: 9px;
     }
     
-    .hpo-action-btn {
-        width: 20px;
-        height: 20px;
+    .compact-hpo-card .btn {
+        width: 18px;
+        height: 18px;
+    }
+    
+    .compact-hpo-card code {
+        font-size: 7px;
+        padding: 1px 2px;
     }
 }
 
