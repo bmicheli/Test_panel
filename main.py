@@ -612,7 +612,7 @@ def update_horizontal_hpo_suggestions(uk_ids, au_ids, internal_ids, rejected_hpo
             })
         
         # Show TOP 3 available suggestions SIDE BY SIDE
-        top_suggestions = filtered_suggestions[:3]
+        top_suggestions = filtered_suggestions[:4]
         total_available = len(filtered_suggestions)
         
         suggestion_cards = []
@@ -624,7 +624,7 @@ def update_horizontal_hpo_suggestions(uk_ids, au_ids, internal_ids, rejected_hpo
                 },
                 suggestion["keyword"],
                 i + 1,
-                min(3, total_available)
+                min(4, total_available)
             )
             suggestion_cards.append(card)
         

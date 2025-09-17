@@ -1,6 +1,6 @@
 """
 Simplified Interactive HPO Suggestions - Updated components.py
-Fixed horizontal suggestion cards with proper button positioning
+Fixed horizontal suggestion cards with consistent sizing regardless of number of cards
 """
 
 import dash_bootstrap_components as dbc
@@ -177,16 +177,15 @@ def create_options_card():
                         ], className="text-muted text-center", 
                            style={"fontSize": "11px", "fontStyle": "italic", "padding": "10px"})
                     ], style={
-                        "height": "130px",  # INCREASED HEIGHT FOR BETTER READABILITY
+                        "height": "130px",
                         "border": "2px dashed rgba(0, 188, 212, 0.3)",
                         "borderRadius": "10px",
-                        "padding": "10px",  # INCREASED PADDING TO PREVENT BORDER CROPPING
+                        "padding": "10px",
                         "backgroundColor": "rgba(248, 249, 250, 0.5)",
                         "display": "flex",
                         "flexDirection": "row",
-                        "gap": "8px",  # SLIGHTLY MORE GAP
+                        "gap": "8px",
                         "alignItems": "stretch"
-                        # REMOVED overflow: hidden TO SHOW FULL BORDERS
                     })
                 ], width=4),
                 dbc.Col([
@@ -225,15 +224,14 @@ def create_options_card():
     ], className="glass-card mb-3 fade-in-up")
 
 def create_horizontal_hpo_suggestion_card(hpo_term, keyword, suggestion_number, total_suggestions):
-    """Create a horizontal HPO suggestion card with buttons INSIDE the card - IMPROVED READABILITY"""
+    """Create a horizontal HPO suggestion card with FIXED WIDTH - 4 cards per row"""
     return html.Div([
-        # FIXED LAYOUT WITH PROPER FLEX STRUCTURE AND LARGER FONTS
         html.Div([
-            # HPO term name (top section) - LARGER FONT
+            # HPO term name (top section)
             html.Div([
                 html.Strong(hpo_term["name"], 
                            style={
-                               "fontSize": "13px",  # INCREASED FROM 10px
+                               "fontSize": "13px",
                                "color": "#2c3e50", 
                                "display": "block", 
                                "marginBottom": "3px", 
@@ -246,19 +244,19 @@ def create_horizontal_hpo_suggestion_card(hpo_term, keyword, suggestion_number, 
                            })
             ], style={
                 "marginBottom": "8px", 
-                "height": "50px",  # INCREASED HEIGHT FOR BETTER TEXT DISPLAY
+                "height": "50px",
                 "display": "flex", 
                 "alignItems": "center", 
                 "justifyContent": "center",
                 "overflow": "hidden"
             }),
             
-            # HPO ID (middle section) - REMOVED KEYWORD
+            # HPO ID (middle section)
             html.Div([
                 html.Code(hpo_term['id'], style={
-                    "fontSize": "11px",  # INCREASED FROM 9px
+                    "fontSize": "11px",
                     "backgroundColor": "#e3f2fd", 
-                    "padding": "3px 6px",  # MORE PADDING
+                    "padding": "3px 6px",
                     "borderRadius": "4px", 
                     "display": "block",
                     "textAlign": "center", 
@@ -268,24 +266,24 @@ def create_horizontal_hpo_suggestion_card(hpo_term, keyword, suggestion_number, 
                 })
             ], style={
                 "marginBottom": "10px", 
-                "height": "25px",  # ADJUSTED HEIGHT
+                "height": "25px",
                 "overflow": "hidden",
                 "display": "flex",
                 "alignItems": "center",
                 "justifyContent": "center"
             }),
             
-            # Action buttons (bottom section) - LARGER BUTTONS
+            # Action buttons (bottom section)
             html.Div([
                 dbc.Button(
-                    DashIconify(icon="mdi:check", width=14),  # INCREASED ICON SIZE
+                    DashIconify(icon="mdi:check", width=14),
                     id={"type": "horizontal-hpo-keep-btn", "hpo_id": hpo_term["id"], "keyword": keyword},
                     color="success",
                     size="sm",
                     className="me-1",
                     style={
                         "borderRadius": "4px", 
-                        "width": "26px",  # INCREASED SIZE
+                        "width": "26px",
                         "height": "26px", 
                         "padding": "0",
                         "display": "flex",
@@ -299,13 +297,13 @@ def create_horizontal_hpo_suggestion_card(hpo_term, keyword, suggestion_number, 
                     n_clicks=0
                 ),
                 dbc.Button(
-                    DashIconify(icon="mdi:close", width=14),  # INCREASED ICON SIZE
+                    DashIconify(icon="mdi:close", width=14),
                     id={"type": "horizontal-hpo-skip-btn", "hpo_id": hpo_term["id"], "keyword": keyword},
                     color="danger",
                     size="sm",
                     style={
                         "borderRadius": "4px", 
-                        "width": "26px",  # INCREASED SIZE
+                        "width": "26px",
                         "height": "26px", 
                         "padding": "0",
                         "display": "flex",
@@ -321,15 +319,15 @@ def create_horizontal_hpo_suggestion_card(hpo_term, keyword, suggestion_number, 
             ], style={
                 "display": "flex", 
                 "justifyContent": "center", 
-                "gap": "6px",  # MORE SPACE BETWEEN BUTTONS
-                "height": "26px"  # HEIGHT FOR LARGER BUTTONS
+                "gap": "6px",
+                "height": "26px"
             })
         ], style={
             "display": "flex",
             "flexDirection": "column",
             "height": "100%",
             "justifyContent": "space-between",
-            "padding": "10px"  # MORE PADDING TO PREVENT BORDER CROPPING
+            "padding": "10px"
         })
     ], 
     id=f"horizontal-hpo-suggestion-{hpo_term['id']}",
@@ -340,14 +338,14 @@ def create_horizontal_hpo_suggestion_card(hpo_term, keyword, suggestion_number, 
         "borderRadius": "8px",
         "boxShadow": "0 2px 6px rgba(0, 188, 212, 0.15)",
         "transition": "all 0.2s ease",
-        "height": "110px",  # REDUCED HEIGHT TO FIT BETTER IN CONTAINER
-        "flex": "1",
+        "height": "110px",
+        "width": "calc(25% - 10px)",  # 4 CARDS PER ROW WITH GAP
+        "minWidth": "180px",  # MINIMUM WIDTH FOR READABILITY
         "display": "flex",
         "flexDirection": "column",
-        "minWidth": "0",
-        "maxWidth": "none",
-        "overflow": "visible",  # ALLOW BORDER TO BE FULLY VISIBLE
-        "margin": "2px"  # SMALL MARGIN TO PREVENT BORDER CROPPING
+        "overflow": "visible",
+        "margin": "2px",
+        "flexShrink": "0"  # PREVENT FLEX SHRINK
     })
 
 def create_action_buttons():
