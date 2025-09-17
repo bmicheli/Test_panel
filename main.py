@@ -471,7 +471,19 @@ def update_hpo_options(search_value, current_values, current_options):
 )
 def update_horizontal_hpo_suggestions(uk_ids, au_ids, internal_ids, rejected_hpo_terms, 
                                     counter, current_hpo_values):
-    """Generate 3 horizontal HPO suggestions side by side"""
+    """Generate 3 horizontal HPO suggestions side by side - FIXED VERSION"""
+    
+    # CONSTANT CONTAINER STYLE - NEVER CHANGES
+    fixed_container_style = {
+        "height": "130px",  # INCREASED HEIGHT FOR BETTER READABILITY
+        "borderRadius": "10px",
+        "padding": "10px",  # INCREASED PADDING TO PREVENT BORDER CROPPING
+        "display": "flex",
+        "flexDirection": "row",
+        "gap": "8px",  # SLIGHTLY MORE GAP
+        "alignItems": "stretch"
+        # REMOVED overflow: hidden TO SHOW FULL BORDERS
+    }
     
     # Check if any panels are selected
     if not any([uk_ids, au_ids, internal_ids]):
@@ -480,17 +492,20 @@ def update_horizontal_hpo_suggestions(uk_ids, au_ids, internal_ids, rejected_hpo
                 DashIconify(icon="mdi:information", width=16, className="me-2", style={"color": "#6c757d"}),
                 "Select panels to see HPO suggestions"
             ], className="text-muted text-center", 
-               style={"fontSize": "11px", "fontStyle": "italic", "padding": "10px"})
+               style={
+                   "fontSize": "11px", 
+                   "fontStyle": "italic", 
+                   "padding": "10px",
+                   "display": "flex",
+                   "alignItems": "center",
+                   "justifyContent": "center",
+                   "width": "100%",
+                   "height": "100%"
+               })
         ], {
-            "height": "105px",  # UPDATED HEIGHT
+            **fixed_container_style,
             "border": "2px dashed rgba(0, 188, 212, 0.3)",
-            "borderRadius": "10px",
-            "padding": "5px",
             "backgroundColor": "rgba(248, 249, 250, 0.5)",
-            "display": "flex",
-            "flexDirection": "row",
-            "gap": "5px",
-            "alignItems": "center",
             "justifyContent": "center"
         })
     
@@ -507,17 +522,20 @@ def update_horizontal_hpo_suggestions(uk_ids, au_ids, internal_ids, rejected_hpo
                     DashIconify(icon="mdi:alert-circle", width=16, className="me-2", style={"color": "#ffc107"}),
                     "No panel names found"
                 ], className="text-warning text-center", 
-                   style={"fontSize": "11px", "fontStyle": "italic", "padding": "10px"})
+                   style={
+                       "fontSize": "11px", 
+                       "fontStyle": "italic", 
+                       "padding": "10px",
+                       "display": "flex",
+                       "alignItems": "center",
+                       "justifyContent": "center",
+                       "width": "100%",
+                       "height": "100%"
+                   })
             ], {
-                "height": "105px",  # UPDATED HEIGHT
+                **fixed_container_style,
                 "border": "2px dashed rgba(255, 193, 7, 0.3)",
-                "borderRadius": "10px",
-                "padding": "5px",
                 "backgroundColor": "rgba(255, 248, 225, 0.5)",
-                "display": "flex",
-                "flexDirection": "row",
-                "gap": "5px",
-                "alignItems": "center",
                 "justifyContent": "center"
             })
         
@@ -530,17 +548,20 @@ def update_horizontal_hpo_suggestions(uk_ids, au_ids, internal_ids, rejected_hpo
                     DashIconify(icon="mdi:magnify", width=16, className="me-2", style={"color": "#6c757d"}),
                     "No relevant keywords found"
                 ], className="text-muted text-center", 
-                   style={"fontSize": "11px", "fontStyle": "italic", "padding": "10px"})
+                   style={
+                       "fontSize": "11px", 
+                       "fontStyle": "italic", 
+                       "padding": "10px",
+                       "display": "flex",
+                       "alignItems": "center",
+                       "justifyContent": "center",
+                       "width": "100%",
+                       "height": "100%"
+                   })
             ], {
-                "height": "90px",
+                **fixed_container_style,
                 "border": "2px dashed rgba(0, 188, 212, 0.3)",
-                "borderRadius": "10px",
-                "padding": "5px",
                 "backgroundColor": "rgba(248, 249, 250, 0.5)",
-                "display": "flex",
-                "flexDirection": "row",
-                "gap": "5px",
-                "alignItems": "center",
                 "justifyContent": "center"
             })
         
@@ -565,7 +586,7 @@ def update_horizontal_hpo_suggestions(uk_ids, au_ids, internal_ids, rejected_hpo
                         "All suggestions reviewed!"
                     ], style={"marginBottom": "6px", "fontSize": "10px"}),
                     dbc.Button(
-                        [DashIconify(icon="mdi:refresh", width=10, className="me-1"), "More"],
+                        [DashIconify(icon="mdi:refresh", width=15, className="me-1"), "retry"],
                         id="reset-hpo-suggestions-btn",
                         color="outline-primary",
                         size="sm",
@@ -573,17 +594,20 @@ def update_horizontal_hpo_suggestions(uk_ids, au_ids, internal_ids, rejected_hpo
                         n_clicks=0
                     )
                 ], className="text-success text-center", 
-                   style={"fontSize": "10px", "padding": "8px"})
+                   style={
+                       "fontSize": "10px", 
+                       "padding": "8px",
+                       "display": "flex",
+                       "flexDirection": "column",
+                       "alignItems": "center",
+                       "justifyContent": "center",
+                       "width": "100%",
+                       "height": "100%"
+                   })
             ], {
-                "height": "90px",
+                **fixed_container_style,
                 "border": "2px solid rgba(40, 167, 69, 0.3)",
-                "borderRadius": "10px",
-                "padding": "5px",
                 "backgroundColor": "rgba(212, 237, 218, 0.5)",
-                "display": "flex",
-                "flexDirection": "row",
-                "gap": "5px",
-                "alignItems": "center",
                 "justifyContent": "center"
             })
         
@@ -604,15 +628,8 @@ def update_horizontal_hpo_suggestions(uk_ids, au_ids, internal_ids, rejected_hpo
             )
             suggestion_cards.append(card)
         
-        return (suggestion_cards, {
-            "height": "105px",  # UPDATED HEIGHT
-            "borderRadius": "10px",
-            "padding": "5px",
-            "display": "flex",
-            "flexDirection": "row",
-            "gap": "5px",
-            "alignItems": "stretch"
-        })
+        # RETURN FIXED CONTAINER STYLE WITH SUGGESTIONS
+        return (suggestion_cards, fixed_container_style)
         
     except Exception as e:
         logger.error(f"Error generating horizontal HPO suggestions: {e}")
@@ -621,19 +638,23 @@ def update_horizontal_hpo_suggestions(uk_ids, au_ids, internal_ids, rejected_hpo
                 DashIconify(icon="mdi:alert-circle", width=16, className="me-2", style={"color": "#dc3545"}),
                 "Error loading suggestions"
             ], className="text-danger text-center", 
-               style={"fontSize": "11px", "fontStyle": "italic", "padding": "10px"})
+               style={
+                   "fontSize": "11px", 
+                   "fontStyle": "italic", 
+                   "padding": "10px",
+                   "display": "flex",
+                   "alignItems": "center",
+                   "justifyContent": "center",
+                   "width": "100%",
+                   "height": "100%"
+               })
         ], {
-            "height": "90px",
+            **fixed_container_style,
             "border": "2px dashed rgba(220, 53, 69, 0.3)",
-            "borderRadius": "10px",
-            "padding": "5px",
             "backgroundColor": "rgba(248, 215, 218, 0.5)",
-            "display": "flex",
-            "flexDirection": "row",
-            "gap": "5px",
-            "alignItems": "center",
             "justifyContent": "center"
         })
+
 
 @app.callback(
     [Output("hpo-search-dropdown", "value", allow_duplicate=True),
