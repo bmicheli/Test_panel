@@ -2,7 +2,12 @@
 Utility functions for PanelBuilder
 Contains API calls, data processing, and helper functions
 """
-
+import re
+import requests
+from functools import lru_cache
+import json
+import time
+from collections import Counter
 import requests
 import pandas as pd
 import numpy as np
@@ -694,80 +699,394 @@ def generate_panel_summary(uk_ids, au_ids, internal_ids, confs, manual_genes_lis
     
     return ",".join(summary_parts)
 
-def extract_keywords_from_panel_names(panel_names):
-    """Extract relevant medical keywords from panel names for HPO suggestion"""
-    import re
+# =============================================================================
+# MAPPING MÉDICAL AMÉLIORÉ POUR HPO
+# =============================================================================
+
+# Dictionnaire de mapping entre termes médicaux et HPO terms fréquents
+MEDICAL_TO_HPO_MAPPING = {
+    # Système nerveux
+    'epilepsy': ['HP:0001250', 'HP:0002197'],
+    'seizure': ['HP:0001250', 'HP:0011097'],
+    'neurodevelopmental': ['HP:0012759', 'HP:0001263'],
+    'intellectual': ['HP:0001249', 'HP:0001263'],
+    'autism': ['HP:0000717', 'HP:0012759'],
+    'microcephaly': ['HP:0000252', 'HP:0001249'],
+    'macrocephaly': ['HP:0000256', 'HP:0001250'],
+    'ataxia': ['HP:0001251', 'HP:0002066'],
+    'spasticity': ['HP:0001257', 'HP:0002061'],
+    'neuropathy': ['HP:0009830', 'HP:0000762'],
+    'muscular': ['HP:0003560', 'HP:0003198'],
+    'dystrophy': ['HP:0003560', 'HP:0003198'],
+    'myopathy': ['HP:0003198', 'HP:0009063'],
     
-    # Medical keywords that are likely to have corresponding HPO terms
-    medical_keywords = []
+    # Système cardiovasculaire
+    'cardiomyopathy': ['HP:0001638', 'HP:0006515'],
+    'arrhythmia': ['HP:0011675', 'HP:0001645'],
+    'cardiac': ['HP:0001627', 'HP:0001638'],
+    'heart': ['HP:0001627', 'HP:0001638'],
+    'aortic': ['HP:0002616', 'HP:0001645'],
+    'hypertrophic': ['HP:0001639', 'HP:0001638'],
+    'dilated': ['HP:0001644', 'HP:0001638'],
+    
+    # Système visuel
+    'retinal': ['HP:0000479', 'HP:0000504'],
+    'blindness': ['HP:0000618', 'HP:0000505'],
+    'vision': ['HP:0000504', 'HP:0000479'],
+    'optic': ['HP:0000648', 'HP:0000504'],
+    'cataract': ['HP:0000518', 'HP:0000479'],
+    'glaucoma': ['HP:0000501', 'HP:0000479'],
+    
+    # Système auditif
+    'hearing': ['HP:0000365', 'HP:0000407'],
+    'deafness': ['HP:0000365', 'HP:0000407'],
+    'auditory': ['HP:0000364', 'HP:0000365'],
+    
+    # Système rénal
+    'kidney': ['HP:0000077', 'HP:0000083'],
+    'renal': ['HP:0000077', 'HP:0000083'],
+    'nephritis': ['HP:0000123', 'HP:0000077'],
+    'cystic': ['HP:0000107', 'HP:0000077'],
+    
+    # Métabolisme
+    'diabetes': ['HP:0000819', 'HP:0001998'],
+    'obesity': ['HP:0001513', 'HP:0000819'],
+    'metabolic': ['HP:0001939', 'HP:0000819'],
+    'growth': ['HP:0001507', 'HP:0004322'],
+    'short': ['HP:0004322', 'HP:0001507'],
+    'tall': ['HP:0000098', 'HP:0001519'],
+    
+    # Système immunitaire
+    'immune': ['HP:0002715', 'HP:0005406'],
+    'immunodeficiency': ['HP:0002721', 'HP:0005406'],
+    'autoimmune': ['HP:0002960', 'HP:0002715'],
+    
+    # Système digestif
+    'liver': ['HP:0001392', 'HP:0001394'],
+    'hepatic': ['HP:0001392', 'HP:0001394'],
+    'pancreatic': ['HP:0001735', 'HP:0001738'],
+    'gastrointestinal': ['HP:0011024', 'HP:0002013'],
+    
+    # Développement
+    'skeletal': ['HP:0000924', 'HP:0002652'],
+    'bone': ['HP:0000924', 'HP:0002652'],
+    'facial': ['HP:0001999', 'HP:0000271'],
+    'cleft': ['HP:0000175', 'HP:0001999'],
+    
+    # Cancer
+    'cancer': ['HP:0002664', 'HP:0030731'],
+    'tumor': ['HP:0002664', 'HP:0100633'],
+    'malignant': ['HP:0002664', 'HP:0030731'],
+}
+
+# Mots-clés à ignorer (trop génériques ou non médicaux)
+STOP_WORDS = {
+    'panel', 'gene', 'genes', 'list', 'testing', 'analysis', 'comprehensive',
+    'extended', 'broad', 'focused', 'clinical', 'diagnostic', 'genomic',
+    'inherited', 'familial', 'congenital', 'syndrome', 'syndromes',
+    'disorder', 'disorders', 'disease', 'diseases', 'condition', 'conditions',
+    'defect', 'defects', 'abnormality', 'abnormalities', 'version', 'updated',
+    'v1', 'v2', 'v3', 'v4', 'v5', 'australia', 'australian', 'genomics',
+    'england', 'primary', 'secondary', 'rare', 'common', 'early', 'late',
+    'onset', 'adult', 'paediatric', 'pediatric', 'childhood', 'neonatal'
+}
+
+# =============================================================================
+# FONCTIONS AMÉLIORÉES POUR EXTRACTION DE MOTS-CLÉS
+# =============================================================================
+
+def extract_medical_keywords_enhanced(panel_names):
+    """
+    Version améliorée de l'extraction de mots-clés médicaux
+    """
+    if not panel_names:
+        return []
+    
+    keywords = []
+    keyword_scores = {}
     
     for name in panel_names:
         if not name:
             continue
-            
-        # Clean the panel name
-        cleaned_name = name.lower()
         
-        # Remove common non-medical words and patterns
-        stop_words = ['panel', 'gene', 'genes', 'list', 'testing', 'analysis', 'v1', 'v2', 'v3', 
-                     'version', 'updated', 'comprehensive', 'extended', 'broad', 'focused',
-                     'clinical', 'diagnostic', 'genomic', 'inherited', 'familial', 'congenital',
-                     'syndrome', 'syndromes', 'disorder', 'disorders', 'disease', 'diseases',
-                     'condition', 'conditions', 'defect', 'defects', 'abnormality', 'abnormalities']
+        # Nettoyage et normalisation
+        cleaned_name = name.lower().strip()
         
-        # Extract meaningful medical terms (remove punctuation and split)
+        # Remplacer les caractères spéciaux par des espaces
+        cleaned_name = re.sub(r'[_\-/,;:()&]', ' ', cleaned_name)
+        
+        # Extraire les mots significatifs
         words = re.findall(r'\b[a-zA-Z]{3,}\b', cleaned_name)
         
+        # Traitement des mots
         for word in words:
-            if (word not in stop_words and 
-                len(word) >= 4 and  # Minimum length for medical terms
-                not word.isdigit()):
-                medical_keywords.append(word.capitalize())
+            if (word not in STOP_WORDS and 
+                len(word) >= 3 and 
+                not word.isdigit() and
+                not re.match(r'^v\d+$', word)):  # Éviter les versions
+                
+                # Calculer un score basé sur la fréquence et la pertinence
+                score = 1
+                
+                # Bonus si le mot est dans notre mapping médical
+                if word in MEDICAL_TO_HPO_MAPPING:
+                    score += 5
+                
+                # Bonus pour les mots plus longs (souvent plus spécifiques)
+                if len(word) >= 6:
+                    score += 1
+                
+                # Accumuler les scores
+                if word not in keyword_scores:
+                    keyword_scores[word] = 0
+                keyword_scores[word] += score
     
-    # Remove duplicates while preserving order
-    unique_keywords = list(dict.fromkeys(medical_keywords))
+    # Trier par score décroissant
+    sorted_keywords = sorted(keyword_scores.items(), key=lambda x: x[1], reverse=True)
     
-    return unique_keywords[:10]  # Limit to 10 keywords for API efficiency
+    # Extraire les mots-clés avec les meilleurs scores
+    keywords = [word for word, score in sorted_keywords if score >= 2]
+    
+    return keywords[:8]  # Limiter à 8 mots-clés maximum
 
-def search_hpo_terms_by_keywords(keywords, max_per_keyword=2):
-    """Search HPO terms based on medical keywords extracted from panel names"""
+# =============================================================================
+# RECHERCHE HPO AMÉLIORÉE
+# =============================================================================
+
+@lru_cache(maxsize=100)
+def search_hpo_with_fallback(query, max_results=3):
+    """
+    Recherche HPO avec système de fallback amélioré
+    """
+    results = []
+    
+    try:
+        # 1. Essayer d'abord notre mapping direct
+        query_lower = query.lower()
+        if query_lower in MEDICAL_TO_HPO_MAPPING:
+            mapped_hpo_ids = MEDICAL_TO_HPO_MAPPING[query_lower][:max_results]
+            for hpo_id in mapped_hpo_ids:
+                try:
+                    details = fetch_hpo_term_details_cached(hpo_id)
+                    if details and details.get('name'):
+                        results.append({
+                            'value': hpo_id,
+                            'label': f"{details['name']} ({hpo_id})",
+                            'keyword': query,
+                            'source': 'mapping',
+                            'relevance': 10
+                        })
+                except:
+                    continue
+        
+        # 2. Si pas assez de résultats, chercher via API
+        if len(results) < max_results:
+            try:
+                api_results = search_hpo_via_api(query, max_results - len(results))
+                for result in api_results:
+                    # Éviter les doublons
+                    if not any(r['value'] == result['value'] for r in results):
+                        result['source'] = 'api'
+                        result['relevance'] = 7
+                        results.append(result)
+            except Exception as e:
+                logger.warning(f"API HPO search failed for '{query}': {e}")
+        
+        # 3. Si toujours pas assez, essayer des variations du mot
+        if len(results) < max_results:
+            variations = generate_query_variations(query)
+            for variation in variations[:2]:  # Limiter à 2 variations
+                try:
+                    var_results = search_hpo_via_api(variation, 1)
+                    for result in var_results:
+                        if not any(r['value'] == result['value'] for r in results):
+                            result['source'] = 'variation'
+                            result['relevance'] = 5
+                            results.append(result)
+                            if len(results) >= max_results:
+                                break
+                except:
+                    continue
+                
+                if len(results) >= max_results:
+                    break
+    
+    except Exception as e:
+        logger.error(f"Error in enhanced HPO search for '{query}': {e}")
+    
+    # Trier par pertinence
+    results.sort(key=lambda x: x.get('relevance', 0), reverse=True)
+    return results[:max_results]
+
+def search_hpo_via_api(query, limit=5):
+    """
+    Recherche HPO via l'API JAX avec gestion d'erreurs améliorée
+    """
+    if not query or len(query.strip()) < 2:
+        return []
+    
+    try:
+        url = f"https://ontology.jax.org/api/hp/search"
+        params = {
+            'q': query.strip(),
+            'page': 0,
+            'limit': min(limit, 10)
+        }
+        
+        response = requests.get(url, params=params, timeout=8)
+        response.raise_for_status()
+        
+        data = response.json()
+        results = []
+        
+        if 'terms' in data and data['terms']:
+            for term in data['terms'][:limit]:
+                hpo_id = term.get('id', '')
+                hpo_name = term.get('name', '')
+                
+                if hpo_id and hpo_name:
+                    results.append({
+                        'value': hpo_id,
+                        'label': f"{hpo_name} ({hpo_id})",
+                        'keyword': query
+                    })
+        
+        return results
+        
+    except requests.exceptions.RequestException as e:
+        logger.warning(f"HPO API request failed for '{query}': {e}")
+        return []
+    except Exception as e:
+        logger.error(f"Unexpected error in HPO API search for '{query}': {e}")
+        return []
+
+def generate_query_variations(query):
+    """
+    Génère des variations d'un terme de recherche pour améliorer les résultats HPO
+    """
+    variations = []
+    
+    # Version singulier/pluriel
+    if query.endswith('s') and len(query) > 4:
+        variations.append(query[:-1])  # Retirer le 's'
+    elif not query.endswith('s'):
+        variations.append(query + 's')  # Ajouter un 's'
+    
+    # Variations communes de terminaisons médicales
+    medical_variants = {
+        'ic': ['ical', 'y'],  # cardiac -> cardiacal, cardiacu
+        'al': ['ic'],         # neural -> neuric
+        'ism': ['tic'],       # metabolism -> metabolic
+        'ity': ['ic'],        # spasticity -> spastic
+        'osis': ['otic'],     # neurosis -> neurotic
+        'pathy': ['pathic'],  # neuropathy -> neuropathic
+    }
+    
+    for suffix, replacements in medical_variants.items():
+        if query.endswith(suffix):
+            base = query[:-len(suffix)]
+            for replacement in replacements:
+                variations.append(base + replacement)
+    
+    return variations
+
+# =============================================================================
+# FONCTION PRINCIPALE AMÉLIORÉE
+# =============================================================================
+
+def search_hpo_terms_by_keywords_enhanced(keywords, max_per_keyword=2):
+    """
+    Version améliorée de la recherche HPO basée sur les mots-clés
+    """
     if not keywords:
         return []
     
-    suggested_hpo_terms = []
+    logger.info(f"🔍 Searching HPO terms for keywords: {keywords}")
     
-    for keyword in keywords:
+    suggested_hpo_terms = []
+    processed_hpo_ids = set()
+    
+    # Traiter chaque mot-clé
+    for keyword in keywords[:6]:  # Limiter à 6 mots-clés pour éviter trop d'appels API
         try:
-            # Search HPO terms for each keyword
-            url = f"https://ontology.jax.org/api/hp/search?q={keyword}&page=0&limit=5"
-            response = requests.get(url, timeout=5)
+            # Utiliser notre fonction améliorée
+            keyword_results = search_hpo_with_fallback(keyword, max_per_keyword)
             
-            if response.status_code == 200:
-                data = response.json()
-                terms_found = 0
+            for result in keyword_results:
+                hpo_id = result['value']
                 
-                if 'terms' in data:
-                    for term in data['terms']:
-                        if terms_found >= max_per_keyword:
-                            break
-                            
-                        hpo_id = term.get('id', '')
-                        hpo_name = term.get('name', '')
-                        
-                        if hpo_id and hpo_name and hpo_id not in [t['value'] for t in suggested_hpo_terms]:
-                            suggested_hpo_terms.append({
-                                "label": f"{hpo_name} ({hpo_id})",
-                                "value": hpo_id,
-                                "keyword": keyword
-                            })
-                            terms_found += 1
-                            
+                # Éviter les doublons
+                if hpo_id not in processed_hpo_ids:
+                    processed_hpo_ids.add(hpo_id)
+                    suggested_hpo_terms.append(result)
+        
         except Exception as e:
-            logger.error(f"Error searching HPO terms for keyword '{keyword}': {e}")
+            logger.error(f"Error processing keyword '{keyword}': {e}")
             continue
     
-    # Sort by relevance (could be enhanced with better scoring)
-    return suggested_hpo_terms[:8]  # Return max 8 suggestions
+    # Trier par pertinence (les résultats du mapping direct en premier)
+    suggested_hpo_terms.sort(key=lambda x: (
+        x.get('relevance', 0),
+        -len(x.get('keyword', ''))  # Préférer les mots-clés plus longs
+    ), reverse=True)
+    
+    logger.info(f"✅ Found {len(suggested_hpo_terms)} HPO suggestions")
+    
+    return suggested_hpo_terms[:8]  # Retourner maximum 8 suggestions
+
+# =============================================================================
+# FONCTIONS MISES À JOUR POUR LE SYSTÈME PRINCIPAL
+# =============================================================================
+
+def extract_keywords_from_panel_names(panel_names):
+    """
+    Version mise à jour qui utilise le système amélioré
+    """
+    return extract_medical_keywords_enhanced(panel_names)
+
+def search_hpo_terms_by_keywords(keywords, max_per_keyword=2):
+    """
+    Version mise à jour qui utilise le système amélioré
+    """
+    return search_hpo_terms_by_keywords_enhanced(keywords, max_per_keyword)
+
+# =============================================================================
+# FONCTIONS DE DEBUG ET VALIDATION
+# =============================================================================
+
+def validate_hpo_suggestions(panel_names, suggested_hpo_terms):
+    """
+    Fonction pour valider la qualité des suggestions HPO
+    """
+    if not panel_names or not suggested_hpo_terms:
+        return {"score": 0, "details": "No data to validate"}
+    
+    validation_score = 0
+    details = []
+    
+    # Extraire les mots-clés des panels
+    keywords = extract_medical_keywords_enhanced(panel_names)
+    
+    for suggestion in suggested_hpo_terms:
+        hpo_name = suggestion.get('label', '').lower()
+        keyword = suggestion.get('keyword', '').lower()
+        
+        # Points si le mot-clé apparaît dans le nom HPO
+        if keyword in hpo_name:
+            validation_score += 2
+            details.append(f"✓ '{keyword}' found in '{hpo_name}'")
+        
+        # Points si c'est un mapping direct
+        if suggestion.get('source') == 'mapping':
+            validation_score += 3
+            details.append(f"✓ Direct mapping for '{keyword}'")
+    
+    return {
+        "score": validation_score,
+        "max_possible": len(suggested_hpo_terms) * 3,
+        "percentage": (validation_score / max(len(suggested_hpo_terms) * 3, 1)) * 100,
+        "details": details
+    }
 
 def get_panel_names_from_selections(uk_ids, au_ids, internal_ids, panels_uk_df, panels_au_df, internal_panels):
     """Extract panel names from current selections for keyword analysis"""

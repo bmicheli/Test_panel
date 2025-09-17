@@ -292,6 +292,8 @@ app.layout = dbc.Container([
     # NOUVEAUX STORES POUR LES SUGGESTIONS HPO
     dcc.Store(id="rejected-hpo-store", data=[]),
     dcc.Store(id="suggestion-counter-store", data=0),
+	dcc.Store(id="hpo-debug-info-store", data={}),
+	dcc.Store(id="hpo-quality-metrics", data={}),
     
 ], fluid=True, style={
     "minHeight": "100vh",
@@ -458,9 +460,15 @@ def update_hpo_options(search_value, current_values, current_options):
 # NOUVEAUX CALLBACKS POUR LES SUGGESTIONS HPO SIMPLIFIÉES
 # =============================================================================
 
+"""
+Callback amélioré pour les suggestions HPO dans main.py
+Remplace le callback existant update_horizontal_hpo_suggestions
+"""
+
 @app.callback(
-    Output("smart-hpo-suggestions-container", "children"),
-    Output("smart-hpo-suggestions-container", "style"),
+    [Output("smart-hpo-suggestions-container", "children"),
+     Output("smart-hpo-suggestions-container", "style"),
+     Output("hpo-debug-info-store", "data")],  # Nouveau store pour debug
     [Input("dropdown-uk", "value"),
      Input("dropdown-au", "value"),
      Input("dropdown-internal", "value"),
@@ -469,28 +477,40 @@ def update_hpo_options(search_value, current_values, current_options):
     [State("hpo-search-dropdown", "value")],
     prevent_initial_call=True
 )
-def update_horizontal_hpo_suggestions(uk_ids, au_ids, internal_ids, rejected_hpo_terms, 
-                                    counter, current_hpo_values):
-    """Generate 3 horizontal HPO suggestions side by side - FIXED VERSION"""
+def update_horizontal_hpo_suggestions_enhanced(uk_ids, au_ids, internal_ids, rejected_hpo_terms, 
+                                             counter, current_hpo_values):
+    """
+    Version améliorée du callback pour les suggestions HPO avec debug et amélioration de la qualité
+    """
     
-    # CONSTANT CONTAINER STYLE - NEVER CHANGES
+    # Style de container fixe
     fixed_container_style = {
-        "height": "130px",  # INCREASED HEIGHT FOR BETTER READABILITY
+        "height": "130px",
         "borderRadius": "10px",
-        "padding": "10px",  # INCREASED PADDING TO PREVENT BORDER CROPPING
+        "padding": "10px",
         "display": "flex",
         "flexDirection": "row",
-        "gap": "8px",  # SLIGHTLY MORE GAP
+        "gap": "8px",
         "alignItems": "stretch"
-        # REMOVED overflow: hidden TO SHOW FULL BORDERS
     }
     
-    # Check if any panels are selected
+    # Initialiser les données de debug
+    debug_data = {
+        "panel_names": [],
+        "keywords": [],
+        "suggestions": [],
+        "processing_time": 0,
+        "errors": []
+    }
+    
+    start_time = time.time()
+    
+    # Vérifier si des panels sont sélectionnés
     if not any([uk_ids, au_ids, internal_ids]):
         return ([
             html.Div([
                 DashIconify(icon="mdi:information", width=16, className="me-2", style={"color": "#6c757d"}),
-                "Select panels to see HPO suggestions"
+                "Select panels to see intelligent HPO suggestions"
             ], className="text-muted text-center", 
                style={
                    "fontSize": "11px", 
@@ -507,20 +527,24 @@ def update_horizontal_hpo_suggestions(uk_ids, au_ids, internal_ids, rejected_hpo
             "border": "2px dashed rgba(0, 188, 212, 0.3)",
             "backgroundColor": "rgba(248, 249, 250, 0.5)",
             "justifyContent": "center"
-        })
+        }, debug_data)
     
     try:
-        # Get panel names from current selections
+        # Étape 1: Récupérer les noms des panels
         panel_names = get_panel_names_from_selections(
             uk_ids, au_ids, internal_ids, 
             panels_uk_df, panels_au_df, internal_panels
         )
+        debug_data["panel_names"] = panel_names
+        
+        logger.info(f"🏥 Processing {len(panel_names)} panel names: {panel_names}")
         
         if not panel_names:
+            debug_data["errors"].append("No panel names found")
             return ([
                 html.Div([
                     DashIconify(icon="mdi:alert-circle", width=16, className="me-2", style={"color": "#ffc107"}),
-                    "No panel names found"
+                    "No panel names found - check panel selections"
                 ], className="text-warning text-center", 
                    style={
                        "fontSize": "11px", 
@@ -537,16 +561,20 @@ def update_horizontal_hpo_suggestions(uk_ids, au_ids, internal_ids, rejected_hpo
                 "border": "2px dashed rgba(255, 193, 7, 0.3)",
                 "backgroundColor": "rgba(255, 248, 225, 0.5)",
                 "justifyContent": "center"
-            })
+            }, debug_data)
         
-        # Extract keywords from panel names
+        # Étape 2: Extraire les mots-clés médicaux (version améliorée)
         keywords = extract_keywords_from_panel_names(panel_names)
+        debug_data["keywords"] = keywords
+        
+        logger.info(f"🔑 Extracted keywords: {keywords}")
         
         if not keywords:
+            debug_data["errors"].append("No relevant keywords extracted")
             return ([
                 html.Div([
                     DashIconify(icon="mdi:magnify", width=16, className="me-2", style={"color": "#6c757d"}),
-                    "No relevant keywords found"
+                    "No relevant medical keywords found in panel names"
                 ], className="text-muted text-center", 
                    style={
                        "fontSize": "11px", 
@@ -563,12 +591,15 @@ def update_horizontal_hpo_suggestions(uk_ids, au_ids, internal_ids, rejected_hpo
                 "border": "2px dashed rgba(0, 188, 212, 0.3)",
                 "backgroundColor": "rgba(248, 249, 250, 0.5)",
                 "justifyContent": "center"
-            })
+            }, debug_data)
         
-        # Search for HPO terms based on keywords
+        # Étape 3: Rechercher les termes HPO (version améliorée)
         suggested_terms = search_hpo_terms_by_keywords(keywords, max_per_keyword=2)
+        debug_data["suggestions"] = suggested_terms
         
-        # Filter out rejected terms and already selected terms
+        logger.info(f"🎯 Found {len(suggested_terms)} HPO suggestions")
+        
+        # Étape 4: Filtrer les termes rejetés et déjà sélectionnés
         rejected_hpo_terms = rejected_hpo_terms or []
         current_hpo_values = current_hpo_values or []
         
@@ -578,25 +609,30 @@ def update_horizontal_hpo_suggestions(uk_ids, au_ids, internal_ids, rejected_hpo
                 term["value"] not in current_hpo_values):
                 filtered_suggestions.append(term)
         
+        logger.info(f"✅ {len(filtered_suggestions)} suggestions after filtering")
+        
+        # Étape 5: Gérer le cas où toutes les suggestions ont été traitées
         if not filtered_suggestions:
             return ([
                 html.Div([
                     html.Div([
-                        DashIconify(icon="mdi:check-circle", width=14, className="me-2", style={"color": "#28a745"}),
-                        "All suggestions reviewed!"
-                    ], style={"marginBottom": "6px", "fontSize": "10px"}),
-                    dbc.Button(
-                        [DashIconify(icon="mdi:refresh", width=15, className="me-1"), "retry"],
-                        id="reset-hpo-suggestions-btn",
-                        color="outline-primary",
-                        size="sm",
-                        style={"fontSize": "9px", "borderRadius": "4px", "padding": "2px 6px"},
-                        n_clicks=0
-                    )
-                ], className="text-success text-center", 
+                        DashIconify(icon="mdi:check-circle", width=16, className="me-2", style={"color": "#28a745"}),
+                        "All HPO suggestions reviewed!"
+                    ], style={"marginBottom": "8px", "fontSize": "11px", "display": "flex", "alignItems": "center"}),
+                    html.Div([
+                        dbc.Button(
+                            [DashIconify(icon="mdi:refresh", width=12, className="me-1"), "Get new suggestions"],
+                            id="reset-hpo-suggestions-btn",
+                            color="outline-primary",
+                            size="sm",
+                            style={"fontSize": "9px", "borderRadius": "4px", "padding": "3px 8px"},
+                            n_clicks=0
+                        )
+                    ], style={"textAlign": "center"})
+                ], className="text-success", 
                    style={
                        "fontSize": "10px", 
-                       "padding": "8px",
+                       "padding": "10px",
                        "display": "flex",
                        "flexDirection": "column",
                        "alignItems": "center",
@@ -609,34 +645,101 @@ def update_horizontal_hpo_suggestions(uk_ids, au_ids, internal_ids, rejected_hpo
                 "border": "2px solid rgba(40, 167, 69, 0.3)",
                 "backgroundColor": "rgba(212, 237, 218, 0.5)",
                 "justifyContent": "center"
-            })
+            }, debug_data)
         
-        # Show TOP 3 available suggestions SIDE BY SIDE
+        # Étape 6: Créer les cartes de suggestion (max 4)
         top_suggestions = filtered_suggestions[:4]
         total_available = len(filtered_suggestions)
         
         suggestion_cards = []
         for i, suggestion in enumerate(top_suggestions):
-            card = create_horizontal_hpo_suggestion_card(
-                {
-                    "id": suggestion["value"],
-                    "name": suggestion["label"].split(" (")[0]  # Extract name without ID
-                },
-                suggestion["keyword"],
-                i + 1,
-                min(4, total_available)
-            )
-            suggestion_cards.append(card)
+            # Calculer un score de confiance basé sur la source et la pertinence
+            confidence_score = suggestion.get('relevance', 5)
+            
+            try:
+                card = create_enhanced_hpo_suggestion_card(
+                    {
+                        "id": suggestion["value"],
+                        "name": suggestion["label"].split(" (")[0]  # Extraire le nom sans l'ID
+                    },
+                    suggestion["keyword"],
+                    i + 1,
+                    min(4, total_available),
+                    confidence_score
+                )
+                
+                # Ajouter une classe CSS basée sur le score de confiance
+                if confidence_score >= 8:
+                    card.className += " confidence-high"
+                elif confidence_score >= 5:
+                    card.className += " confidence-medium"
+                else:
+                    card.className += " confidence-low"
+                
+                # Ajouter l'animation d'entrée
+                card.className += " hpo-suggestion-enter"
+                
+                suggestion_cards.append(card)
+                
+            except Exception as e:
+                logger.error(f"Error creating suggestion card for {suggestion['value']}: {e}")
+                debug_data["errors"].append(f"Card creation error: {str(e)}")
+                continue
         
-        # RETURN FIXED CONTAINER STYLE WITH SUGGESTIONS
-        return (suggestion_cards, fixed_container_style)
+        # Si aucune carte n'a pu être créée
+        if not suggestion_cards:
+            debug_data["errors"].append("No suggestion cards could be created")
+            return ([
+                html.Div([
+                    DashIconify(icon="mdi:alert-circle", width=16, className="me-2", style={"color": "#dc3545"}),
+                    "Error creating suggestion cards"
+                ], className="text-danger text-center", 
+                   style={
+                       "fontSize": "11px", 
+                       "fontStyle": "italic", 
+                       "padding": "10px",
+                       "display": "flex",
+                       "alignItems": "center",
+                       "justifyContent": "center",
+                       "width": "100%",
+                       "height": "100%"
+                   })
+            ], {
+                **fixed_container_style,
+                "border": "2px dashed rgba(220, 53, 69, 0.3)",
+                "backgroundColor": "rgba(248, 215, 218, 0.5)",
+                "justifyContent": "center"
+            }, debug_data)
+        
+        # Ajouter un indicateur de progression si il y a plus de suggestions disponibles
+        if total_available > 4:
+            progress_indicator = html.Div([
+                html.Small(f"+{total_available - 4} more available", 
+                          style={"fontSize": "9px", "color": "#6c757d", "fontStyle": "italic"})
+            ], style={
+                "position": "absolute",
+                "bottom": "2px",
+                "right": "5px",
+                "zIndex": "10"
+            })
+            suggestion_cards.append(progress_indicator)
+        
+        # Calculer le temps de traitement
+        debug_data["processing_time"] = round(time.time() - start_time, 3)
+        logger.info(f"⏱️ HPO processing completed in {debug_data['processing_time']}s")
+        
+        return (suggestion_cards, fixed_container_style, debug_data)
         
     except Exception as e:
-        logger.error(f"Error generating horizontal HPO suggestions: {e}")
+        error_msg = f"Unexpected error in HPO suggestions: {str(e)}"
+        logger.error(error_msg)
+        debug_data["errors"].append(error_msg)
+        debug_data["processing_time"] = round(time.time() - start_time, 3)
+        
         return ([
             html.Div([
                 DashIconify(icon="mdi:alert-circle", width=16, className="me-2", style={"color": "#dc3545"}),
-                "Error loading suggestions"
+                "Error loading HPO suggestions"
             ], className="text-danger text-center", 
                style={
                    "fontSize": "11px", 
@@ -653,8 +756,75 @@ def update_horizontal_hpo_suggestions(uk_ids, au_ids, internal_ids, rejected_hpo
             "border": "2px dashed rgba(220, 53, 69, 0.3)",
             "backgroundColor": "rgba(248, 215, 218, 0.5)",
             "justifyContent": "center"
-        })
+        }, debug_data)
 
+# Callback optionnel pour afficher les informations de debug (en mode développement)
+@app.callback(
+    Output("hpo-debug-collapse", "is_open"),
+    Output("hpo-debug-collapse", "children"),
+    Input("hpo-debug-toggle", "n_clicks"),
+    State("hpo-debug-info-store", "data"),
+    prevent_initial_call=True
+)
+def toggle_hpo_debug_info(n_clicks, debug_data):
+    """
+    Toggle pour afficher/masquer les informations de debug HPO
+    """
+    if not n_clicks:
+        raise dash.exceptions.PreventUpdate
+    
+    if not debug_data:
+        debug_content = html.P("No debug data available", className="text-muted")
+    else:
+        debug_content = create_hpo_debug_info(
+            debug_data.get("panel_names", []),
+            debug_data.get("keywords", []),
+            debug_data.get("suggestions", [])
+        )
+    
+    return not (n_clicks % 2 == 0), debug_content
+
+# Callback pour la validation et l'amélioration continue
+@app.callback(
+    Output("hpo-quality-feedback", "children"),
+    Input("validate-hpo-suggestions", "n_clicks"),
+    State("hpo-debug-info-store", "data"),
+    prevent_initial_call=True
+)
+def validate_hpo_quality(n_clicks, debug_data):
+    """
+    Validation de la qualité des suggestions HPO pour amélioration continue
+    """
+    if not n_clicks or not debug_data:
+        raise dash.exceptions.PreventUpdate
+    
+    panel_names = debug_data.get("panel_names", [])
+    suggestions = debug_data.get("suggestions", [])
+    
+    validation_result = validate_hpo_suggestions(panel_names, suggestions)
+    
+    # Créer un indicateur visuel de la qualité
+    quality_percentage = validation_result.get("percentage", 0)
+    
+    if quality_percentage >= 70:
+        alert_color = "success"
+        icon = "mdi:check-circle"
+        message = f"Excellent quality ({quality_percentage:.1f}%)"
+    elif quality_percentage >= 40:
+        alert_color = "warning" 
+        icon = "mdi:alert-circle"
+        message = f"Good quality ({quality_percentage:.1f}%)"
+    else:
+        alert_color = "danger"
+        icon = "mdi:close-circle"
+        message = f"Needs improvement ({quality_percentage:.1f}%)"
+    
+    return dbc.Alert([
+        DashIconify(icon=icon, width=16, className="me-2"),
+        html.Strong(message),
+        html.Br(),
+        html.Small(f"Score: {validation_result['score']}/{validation_result['max_possible']}")
+    ], color=alert_color, className="mt-2")
 
 @app.callback(
     [Output("hpo-search-dropdown", "value", allow_duplicate=True),

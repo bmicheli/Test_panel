@@ -512,4 +512,232 @@ body {
     from { opacity: 0; }
     to { opacity: 1; }
 }
+
+/* ===================================================================== */
+/* NOUVELLES AMÉLIORATIONS POUR LES CARTES HPO AVEC BOUTONS REPOSITIONNÉS */
+/* ===================================================================== */
+
+/* Améliorations pour les cartes HPO horizontales */
+.horizontal-hpo-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 188, 212, 0.25) !important;
+}
+
+/* Amélioration de l'espacement du texte HPO */
+.horizontal-hpo-card .hpo-text-container {
+    padding: 0 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 3; /* Limite à 3 lignes */
+    -webkit-box-orient: vertical;
+    line-height: 1.3;
+}
+
+/* Optimisation des boutons dans la nouvelle disposition */
+.horizontal-hpo-card .btn {
+    transition: all 0.15s ease;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.horizontal-hpo-card .btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+/* Amélioration du code HPO au centre */
+.horizontal-hpo-card code {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-family: 'Courier New', monospace;
+    font-weight: 500;
+}
+
+/* Animation pour les nouveaux éléments */
+.horizontal-hpo-card .hpo-button-row {
+    animation: slideInFromBottom 0.3s ease-out;
+}
+
+@keyframes slideInFromBottom {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Optimisation de l'espace pour les cartes HPO */
+.horizontal-hpo-card {
+    flex-shrink: 1 !important; /* Permet aux cartes de se rétrécir si nécessaire */
+    flex-grow: 0 !important;
+}
+
+/* Amélioration du conteneur de suggestions pour un meilleur fitting */
+#smart-hpo-suggestions-container {
+    gap: 4px !important; /* Réduit l'espacement entre les cartes */
+    padding: 8px !important;
+}
+
+/* Optimisation responsive pour les cartes HPO horizontales */
+@media (max-width: 1400px) {
+    .horizontal-hpo-card {
+        minWidth: 160px !important;
+        maxWidth: 180px !important;
+        width: calc(25% - 4px) !important;
+    }
+}
+
+@media (max-width: 1200px) {
+    .horizontal-hpo-card {
+        minWidth: 150px !important;
+        maxWidth: 170px !important;
+        width: calc(25% - 3px) !important;
+    }
+    
+    .horizontal-hpo-card .btn {
+        width: 26px !important;
+        height: 26px !important;
+    }
+    
+    .horizontal-hpo-card code {
+        fontSize: 10px !important;
+        padding: 3px 6px !important;
+    }
+}
+
+@media (max-width: 1000px) {
+    .horizontal-hpo-card {
+        minWidth: 140px !important;
+        maxWidth: 160px !important;
+        width: calc(25% - 2px) !important;
+    }
+    
+    .horizontal-hpo-card strong {
+        fontSize: 13px !important;
+    }
+}
+
+@media (max-width: 768px) {
+    .horizontal-hpo-card {
+        minWidth: 130px !important;
+        maxWidth: 150px !important;
+        height: 110px !important;
+        width: calc(50% - 2px) !important; /* 2 cartes par ligne sur mobile */
+    }
+    
+    .horizontal-hpo-card .btn {
+        width: 24px !important;
+        height: 24px !important;
+    }
+    
+    .horizontal-hpo-card strong {
+        fontSize: 12px !important;
+    }
+    
+    .horizontal-hpo-card code {
+        fontSize: 9px !important;
+        padding: 2px 4px !important;
+    }
+}
+
+/* Indicateurs de confiance améliorés */
+.confidence-high {
+    border-left: 4px solid #28a745 !important;
+}
+
+.confidence-medium {
+    border-left: 4px solid #ffc107 !important;
+}
+
+.confidence-low {
+    border-left: 4px solid #6c757d !important;
+}
+
+/* Animations d'entrée */
+.hpo-suggestion-enter {
+    animation: slideInFromBottom 0.3s ease-out;
+}
+
+@keyframes slideInFromBottom {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Badge de source */
+.hpo-source-badge {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    background: rgba(0, 188, 212, 0.8);
+    color: white;
+    font-size: 8px;
+    padding: 1px 3px;
+    border-radius: 2px;
+    font-weight: bold;
+}
+
+/* Amélioration de la lisibilité du texte HPO long */
+.horizontal-hpo-card strong {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+    -webkit-hyphens: auto;
+    -moz-hyphens: auto;
+    -ms-hyphens: auto;
+}
+
+/* Animation de chargement pour les suggestions */
+.suggestion-loading-spinner {
+    animation: spin 1s linear infinite;
+}
+
+/* Amélioration des effets de survol pour les boutons HPO */
+.horizontal-hpo-card .btn-success:hover {
+    background: linear-gradient(135deg, #20c997, #17a2b8) !important;
+    border-color: #20c997 !important;
+    box-shadow: 0 2px 8px rgba(32, 201, 151, 0.4) !important;
+}
+
+.horizontal-hpo-card .btn-danger:hover {
+    background: linear-gradient(135deg, #e74c3c, #c0392b) !important;
+    border-color: #e74c3c !important;
+    box-shadow: 0 2px 8px rgba(231, 76, 60, 0.4) !important;
+}
+
+/* Amélioration de la mise en page pour les conteneurs de suggestions */
+#smart-hpo-suggestions-container .horizontal-hpo-card {
+    flex-shrink: 0;
+    margin-right: 8px;
+}
+
+#smart-hpo-suggestions-container .horizontal-hpo-card:last-child {
+    margin-right: 0;
+}
+
+/* Animation de pulsation pour les éléments importants */
+.pulse-animation {
+    animation: pulseGlow 2s ease-in-out infinite;
+}
+
+@keyframes pulseGlow {
+    0% {
+        box-shadow: 0 0 5px rgba(0, 188, 212, 0.3);
+    }
+    50% {
+        box-shadow: 0 0 20px rgba(0, 188, 212, 0.6);
+    }
+    100% {
+        box-shadow: 0 0 5px rgba(0, 188, 212, 0.3);
+    }
+}
 '''
