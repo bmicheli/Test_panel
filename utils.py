@@ -875,7 +875,7 @@ def extract_medical_keywords_enhanced(panel_names):
 # =============================================================================
 
 @lru_cache(maxsize=100)
-def search_hpo_with_fallback(query, max_results=3):
+def search_hpo_with_fallback(query, max_results=4):  
     """
     Recherche HPO avec système de fallback amélioré
     """
@@ -885,8 +885,9 @@ def search_hpo_with_fallback(query, max_results=3):
         # 1. Essayer d'abord notre mapping direct
         query_lower = query.lower()
         if query_lower in MEDICAL_TO_HPO_MAPPING:
-            mapped_hpo_ids = MEDICAL_TO_HPO_MAPPING[query_lower][:max_results]
-            for hpo_id in mapped_hpo_ids:
+            # ← CHANGÉ: Ne plus limiter les résultats du mapping direct
+            mapped_hpo_ids = MEDICAL_TO_HPO_MAPPING[query_lower]  # Prendre TOUS les HPO du mapping
+            for hpo_id in mapped_hpo_ids[:max_results]:  # Limiter seulement après
                 try:
                     details = fetch_hpo_term_details_cached(hpo_id)
                     if details and details.get('name'):
@@ -1015,7 +1016,7 @@ def generate_query_variations(query):
 # FONCTION PRINCIPALE AMÉLIORÉE
 # =============================================================================
 
-def search_hpo_terms_by_keywords_enhanced(keywords, max_per_keyword=2):
+def search_hpo_terms_by_keywords_enhanced(keywords, max_per_keyword=4):  # ← CHANGÉ: 2 → 4
     """
     Version améliorée de la recherche HPO basée sur les mots-clés
     """
@@ -1030,7 +1031,7 @@ def search_hpo_terms_by_keywords_enhanced(keywords, max_per_keyword=2):
     # Traiter chaque mot-clé
     for keyword in keywords[:6]:  # Limiter à 6 mots-clés pour éviter trop d'appels API
         try:
-            # Utiliser notre fonction améliorée
+            # Utiliser notre fonction améliorée avec plus de résultats
             keyword_results = search_hpo_with_fallback(keyword, max_per_keyword)
             
             for result in keyword_results:
@@ -1053,7 +1054,7 @@ def search_hpo_terms_by_keywords_enhanced(keywords, max_per_keyword=2):
     
     logger.info(f"✅ Found {len(suggested_hpo_terms)} HPO suggestions")
     
-    return suggested_hpo_terms[:8]  # Retourner maximum 8 suggestions
+    return suggested_hpo_terms[:12]  # ← CHANGÉ: 8 → 12 pour permettre plus de suggestions =============================================================================
 
 # =============================================================================
 # FONCTIONS MISES À JOUR POUR LE SYSTÈME PRINCIPAL
@@ -1065,7 +1066,7 @@ def extract_keywords_from_panel_names(panel_names):
     """
     return extract_medical_keywords_enhanced(panel_names)
 
-def search_hpo_terms_by_keywords(keywords, max_per_keyword=2):
+def search_hpo_terms_by_keywords(keywords, max_per_keyword=4):
     """
     Version mise à jour qui utilise le système amélioré
     """

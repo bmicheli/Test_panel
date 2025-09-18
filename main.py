@@ -594,7 +594,7 @@ def update_horizontal_hpo_suggestions_enhanced(uk_ids, au_ids, internal_ids, rej
             }, debug_data)
         
         # Étape 3: Rechercher les termes HPO (version améliorée)
-        suggested_terms = search_hpo_terms_by_keywords(keywords, max_per_keyword=2)
+        suggested_terms = search_hpo_terms_by_keywords(keywords, max_per_keyword=4)
         debug_data["suggestions"] = suggested_terms
         
         logger.info(f"🎯 Found {len(suggested_terms)} HPO suggestions")
