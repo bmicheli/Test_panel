@@ -340,7 +340,18 @@ def toggle_sidebar(n_clicks, is_open):
 	Output("manual-genes", "value", allow_duplicate=True),
 	Output("hpo-search-dropdown", "value", allow_duplicate=True),
 	Output("hpo-search-dropdown", "options", allow_duplicate=True),
-	Output("sidebar-offcanvas", "is_open", allow_duplicate=True)],
+	Output("sidebar-offcanvas", "is_open", allow_duplicate=True),
+	# AJOUT: Reset des éléments de la page
+	Output("gene-table-output", "children", allow_duplicate=True),
+	Output("venn-container", "children", allow_duplicate=True),
+	Output("hpo-terms-table-container", "children", allow_duplicate=True),
+	Output("gene-list-store", "data", allow_duplicate=True),
+	Output("panel-summary-output", "value", allow_duplicate=True),
+	Output("rejected-hpo-store", "data", allow_duplicate=True),
+	Output("suggestion-counter-store", "data", allow_duplicate=True),
+	Output("generate-code-section", "style", allow_duplicate=True),
+	Output("venn-hpo-row", "style", allow_duplicate=True),
+	Output("gene-data-store", "data", allow_duplicate=True)],
 	Input({"type": "preset-btn", "index": ALL}, "n_clicks"),
 	State("hpo-search-dropdown", "options"),
 	prevent_initial_call=True
@@ -376,9 +387,25 @@ def apply_preset(n_clicks_list, current_hpo_options):
 			}
 			updated_hpo_options.append(option)
 	
+	# AJOUT: Valeurs de reset pour tous les éléments
+	reset_gene_table = ""
+	reset_venn = ""
+	reset_hpo_table = ""
+	reset_gene_list = []
+	reset_panel_summary = ""
+	reset_rejected_hpo = []
+	reset_suggestion_counter = 0
+	reset_code_section_style = {"display": "none"}
+	reset_venn_row_style = {"display": "none"}
+	reset_gene_data = {}
+	
 	return (uk_panels, au_panels, internal_panels, conf_levels, manual_genes_text, 
-			hpo_terms, updated_hpo_options, False)
-
+			hpo_terms, updated_hpo_options, False,  # Fermer la sidebar
+			# Reset des éléments de la page
+			reset_gene_table, reset_venn, reset_hpo_table, reset_gene_list, 
+			reset_panel_summary, reset_rejected_hpo, reset_suggestion_counter,
+			reset_code_section_style, reset_venn_row_style, reset_gene_data)
+			
 # =============================================================================
 # CALLBACKS - HPO MANAGEMENT (ORIGINAL)
 # =============================================================================

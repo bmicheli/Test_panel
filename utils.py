@@ -296,20 +296,12 @@ MEDICAL_TO_HPO_MAPPING = {
     "hypospadias": ["HP:0003244", "HP:0000035", "HP:0000036", "HP:0000028"],
     "polycystic ovary syndrome": ["HP:0000877", "HP:0000144", "HP:0000819", "HP:0000787"],
 
-    # Termes génériques
-    "syndrome": ["HP:0000707", "HP:0000118", "HP:0001507", "HP:0001999"],
-    "disorder": ["HP:0000707", "HP:0000118", "HP:0001507", "HP:0001999"],
-    "abnormality": ["HP:0000118", "HP:0000707", "HP:0001507", "HP:0001999"],
-    "malformation": ["HP:0000118", "HP:0000707", "HP:0001507", "HP:0001999"],
-    "dysplasia": ["HP:0009792", "HP:0000118", "HP:0000707", "HP:0001507"],
-    "hypoplasia": ["HP:0025615", "HP:0000118", "HP:0000707", "HP:0001507"],
-    "stenosis": ["HP:0011025", "HP:0000118", "HP:0000707", "HP:0001507"],
 }
 
 
 STOP_WORDS = {
     'panel', 'gene', 'genes', 'list', 'testing', 'analysis', 
-    'version', 'v1', 'v2', 'v3', 'v4', 'v5', 'updated'
+    'version', 'v1', 'v2', 'v3', 'v4', 'v5', 'updated', 'related'
 }
 
 
