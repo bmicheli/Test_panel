@@ -1217,16 +1217,20 @@ def search_hpo_database_dynamic(query, max_results=50):  # ← CHANGÉ: 12 → 5
     
     return results[:max_results]  # Retourner jusqu'à 50 résultats
 
-def search_hpo_terms_by_keywords(keywords, max_per_keyword=8):  # ← CHANGÉ: 4 → 8
+def search_hpo_terms_by_keywords(keywords, max_per_keyword=8, exclude_hpo_ids=None):
     """
     VERSION COMPLÈTE - Récupère TOUS les termes disponibles
+    exclude_hpo_ids: set d'IDs HPO à exclure (pour éviter les doublons avec auto-générés)
     """
     print(f"🚀 FUNCTION CALLED - search_hpo_terms_by_keywords with keywords: {keywords}")
+    print(f"🚫 Excluding HPO IDs: {exclude_hpo_ids}")
     
     if not keywords:
         return []
     
+    exclude_hpo_ids = exclude_hpo_ids or set()
     logger.info(f"🔍 Complete HPO search for keywords: {keywords}")
+    logger.info(f"🚫 Excluding {len(exclude_hpo_ids)} auto-generated HPO terms")
     
     suggested_hpo_terms = []
     processed_hpo_ids = set()
@@ -1238,9 +1242,14 @@ def search_hpo_terms_by_keywords(keywords, max_per_keyword=8):  # ← CHANGÉ: 4
             # ÉTAPE 1: D'abord chercher dans notre dictionnaire
             query_lower = keyword.lower()
             if query_lower in MEDICAL_TO_HPO_MAPPING:
-                mapped_hpo_ids = MEDICAL_TO_HPO_MAPPING[query_lower]  # ← CHANGÉ: Prendre TOUS
+                mapped_hpo_ids = MEDICAL_TO_HPO_MAPPING[query_lower]
                 
                 for hpo_id in mapped_hpo_ids:
+                    # AJOUT: Vérifier si l'HPO n'est pas dans les exclusions
+                    if hpo_id in exclude_hpo_ids:
+                        print(f"🚫 Skipping auto-generated HPO: {hpo_id}")
+                        continue
+                        
                     try:
                         details = fetch_hpo_term_details_cached(hpo_id)
                         if details and details.get('name'):
@@ -1259,14 +1268,21 @@ def search_hpo_terms_by_keywords(keywords, max_per_keyword=8):  # ← CHANGÉ: 4
                 database_results = search_hpo_database_dynamic(keyword, max_results=50)
                 
                 for result in database_results:
+                    hpo_id = result['value']
+                    
+                    # AJOUT: Vérifier si l'HPO n'est pas dans les exclusions
+                    if hpo_id in exclude_hpo_ids:
+                        print(f"🚫 Skipping auto-generated HPO from database: {hpo_id}")
+                        continue
+                    
                     # Éviter les doublons avec le dictionnaire
-                    if not any(r['value'] == result['value'] for r in keyword_results):
+                    if not any(r['value'] == hpo_id for r in keyword_results):
                         result['relevance'] = 7
                         keyword_results.append(result)
             except Exception as e:
                 logger.warning(f"Database search failed for '{keyword}': {e}")
             
-            print(f"📊 Keyword '{keyword}': {len(keyword_results)} total results (mapping + database)")
+            print(f"📊 Keyword '{keyword}': {len(keyword_results)} total results (after exclusions)")
             
             # Ajouter les résultats uniques à la liste finale
             for result in keyword_results:
@@ -1285,11 +1301,10 @@ def search_hpo_terms_by_keywords(keywords, max_per_keyword=8):  # ← CHANGÉ: 4
         -len(x.get('keyword', ''))
     ), reverse=True)
     
-    print(f"✅ TOTAL FINAL: {len(suggested_hpo_terms)} HPO suggestions")
-    logger.info(f"✅ Found {len(suggested_hpo_terms)} HPO suggestions (mapping + database)")
+    print(f"✅ TOTAL FINAL: {len(suggested_hpo_terms)} HPO suggestions (after exclusions)")
+    logger.info(f"✅ Found {len(suggested_hpo_terms)} HPO suggestions (mapping + database, after exclusions)")
     
     return suggested_hpo_terms
-
 #def search_hpo_terms_by_keywords_enhanced(keywords, max_per_keyword=4):  # ← CHANGÉ: 2 → 4
     """
     Version améliorée de la recherche HPO basée sur les mots-clés

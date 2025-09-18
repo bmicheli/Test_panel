@@ -204,8 +204,8 @@ def create_options_card():
 					),
 					html.Div([
 						html.Small([
-							DashIconify(icon="mdi:information", width=12, className="me-1"),
-							"Auto-generated from AU panels"
+							DashIconify(icon="", width=12, className="me-1"),
+							"🟢 Auto-generated from AU panels"
 						], className="text-muted", style={"fontSize": "11px"}),
 						dcc.Loading(
 							id="hpo-loading",

@@ -739,4 +739,21 @@ body {
         box-shadow: 0 0 5px rgba(0, 188, 212, 0.3);
     }
 }
+/* Styles pour les HPO auto-générés - AMÉLIORATION VISUELLE */
+.Select__multi-value:has-text("🟢") {
+    background-color: #d4edda !important;
+    border: 1px solid #28a745 !important;
+}
+
+/* Alternative plus compatible */
+.css-12jo7m5 {
+    background-color: #d4edda !important;
+}
+
+/* Forcer la couleur verte pour les éléments auto-générés */
+div[class*="multi-value"]:has(div:contains("🟢")) {
+    background-color: #d4edda !important;
+    border-color: #28a745 !important;
+}
+
 '''
