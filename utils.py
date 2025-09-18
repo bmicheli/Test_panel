@@ -703,9 +703,8 @@ def generate_panel_summary(uk_ids, au_ids, internal_ids, confs, manual_genes_lis
 # MAPPING MÉDICAL AMÉLIORÉ POUR HPO
 # =============================================================================
 
-# Dictionnaire de mapping entre termes médicaux et HPO terms fréquents
 MEDICAL_TO_HPO_MAPPING = {
-    # Système nerveux - considérablement étendu
+    # Système nerveux
     'epilepsy': ['HP:0001250', 'HP:0002197', 'HP:0011097', 'HP:0007359'],
     'seizure': ['HP:0001250', 'HP:0011097', 'HP:0007359', 'HP:0002069'],
     'neurodevelopmental': ['HP:0012759', 'HP:0001263', 'HP:0001249', 'HP:0000750'],
@@ -807,10 +806,6 @@ MEDICAL_TO_HPO_MAPPING = {
     'hypoplasia': ['HP:0025615', 'HP:0000118', 'HP:0000707', 'HP:0001507'],
     'stenosis': ['HP:0011025', 'HP:0000118', 'HP:0000707', 'HP:0001507'],
 }
-
-# =============================================================================
-# 2. REMPLACER LA LISTE STOP_WORDS (plus permissive)
-# =============================================================================
 
 STOP_WORDS = {
     'panel', 'gene', 'genes', 'list', 'testing', 'analysis', 
