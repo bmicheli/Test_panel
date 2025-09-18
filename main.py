@@ -479,9 +479,6 @@ Remplace le callback existant update_horizontal_hpo_suggestions
 )
 def update_horizontal_hpo_suggestions_enhanced(uk_ids, au_ids, internal_ids, rejected_hpo_terms, 
                                              counter, current_hpo_values):
-    """
-    Version améliorée du callback pour les suggestions HPO avec debug et amélioration de la qualité
-    """
     
     # Style de container fixe
     fixed_container_style = {
@@ -647,8 +644,8 @@ def update_horizontal_hpo_suggestions_enhanced(uk_ids, au_ids, internal_ids, rej
                 "justifyContent": "center"
             }, debug_data)
         
-        # Étape 6: Créer les cartes de suggestion (max 4)
-        top_suggestions = filtered_suggestions[:4]
+        # Étape 6: Créer les cartes de suggestion (max 3)
+        top_suggestions = filtered_suggestions[:3]
         total_available = len(filtered_suggestions)
         
         suggestion_cards = []
@@ -664,7 +661,7 @@ def update_horizontal_hpo_suggestions_enhanced(uk_ids, au_ids, internal_ids, rej
                     },
                     suggestion["keyword"],
                     i + 1,
-                    min(4, total_available),
+                    min(3, total_available),
                     confidence_score
                 )
                 
@@ -712,9 +709,9 @@ def update_horizontal_hpo_suggestions_enhanced(uk_ids, au_ids, internal_ids, rej
             }, debug_data)
         
         # Ajouter un indicateur de progression si il y a plus de suggestions disponibles
-        if total_available > 4:
+        if total_available > 3:
             progress_indicator = html.Div([
-                html.Small(f"+{total_available - 4} more available", 
+                html.Small(f"+{total_available - 3} more available", 
                           style={"fontSize": "9px", "color": "#6c757d", "fontStyle": "italic"})
             ], style={
                 "position": "absolute",

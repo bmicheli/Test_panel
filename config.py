@@ -585,17 +585,17 @@ body {
 /* Optimisation responsive pour les cartes HPO horizontales */
 @media (max-width: 1400px) {
     .horizontal-hpo-card {
-        minWidth: 160px !important;
-        maxWidth: 180px !important;
-        width: calc(25% - 4px) !important;
+        minWidth: 180px !important;
+        maxWidth: 220px !important;
+        width: calc(33.33% - 6px) !important;
     }
 }
 
 @media (max-width: 1200px) {
     .horizontal-hpo-card {
-        minWidth: 150px !important;
-        maxWidth: 170px !important;
-        width: calc(25% - 3px) !important;
+        minWidth: 170px !important;
+        maxWidth: 200px !important;
+        width: calc(33.33% - 5px) !important;
     }
     
     .horizontal-hpo-card .btn {
@@ -611,9 +611,9 @@ body {
 
 @media (max-width: 1000px) {
     .horizontal-hpo-card {
-        minWidth: 140px !important;
-        maxWidth: 160px !important;
-        width: calc(25% - 2px) !important;
+        minWidth: 160px !important;
+        maxWidth: 180px !important;
+        width: calc(33.33% - 4px) !important;
     }
     
     .horizontal-hpo-card strong {
@@ -623,9 +623,8 @@ body {
 
 @media (max-width: 768px) {
     .horizontal-hpo-card {
-        minWidth: 130px !important;
-        maxWidth: 150px !important;
-        height: 110px !important;
+        minWidth: 140px !important;
+        maxWidth: 160px !important;
         width: calc(50% - 2px) !important; /* 2 cartes par ligne sur mobile */
     }
     
