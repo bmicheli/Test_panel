@@ -1,7 +1,3 @@
-"""
-Utility functions for PanelBuilder
-Contains API calls, data processing, and helper functions
-"""
 import re
 import requests
 from functools import lru_cache
@@ -301,7 +297,7 @@ MEDICAL_TO_HPO_MAPPING = {
 
 STOP_WORDS = {
     'panel', 'gene', 'genes', 'list', 'testing', 'analysis', 
-    'version', 'v1', 'v2', 'v3', 'v4', 'v5', 'updated', 'related'
+    'version', 'v1', 'v2', 'v3', 'v4', 'v5', 'updated', 'related', 'dilated','defects'
 }
 
 
@@ -996,7 +992,7 @@ def extract_medical_keywords_enhanced(panel_names):
     sorted_keywords = sorted(keyword_scores.items(), key=lambda x: x[1], reverse=True)
     
     # Extraire les mots-clés avec les meilleurs scores
-    keywords = [word for word, score in sorted_keywords if score >= 2]
+    keywords = [word for word, score in sorted_keywords if score >= 1]
     
     return keywords[:8]  # Limiter à 8 mots-clés maximum
 
