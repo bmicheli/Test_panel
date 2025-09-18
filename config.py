@@ -1,9 +1,3 @@
-"""
-Configuration file for PanelBuilder
-Contains all constants, paths, and configuration settings
-ADAPTED FROM VARIANTVISUALIZER STYLE WITH COMPACT HPO SUGGESTIONS
-"""
-
 import os
 import logging
 
@@ -18,9 +12,8 @@ logger = logging.getLogger(__name__)
 # PERFORMANCE CONFIGURATION
 # =============================================================================
 
-# Cache settings
-CACHE_TIMEOUT = 600  # 10 minutes
-MAX_CONCURRENT_FETCHES = 10  # Maximum parallel API requests
+CACHE_TIMEOUT = 600  
+MAX_CONCURRENT_FETCHES = 10  
 
 # =============================================================================
 # API CONFIGURATION
@@ -68,7 +61,7 @@ EXTERNAL_STYLESHEETS = [
 ]
 
 # =============================================================================
-# CUSTOM CSS - ADAPTED FROM VARIANTVISUALIZER + COMPACT HPO SUGGESTIONS
+# CUSTOM CSS
 # =============================================================================
 
 CUSTOM_CSS = '''
@@ -512,10 +505,6 @@ body {
     from { opacity: 0; }
     to { opacity: 1; }
 }
-
-/* ===================================================================== */
-/* NOUVELLES AMÉLIORATIONS POUR LES CARTES HPO AVEC BOUTONS REPOSITIONNÉS */
-/* ===================================================================== */
 
 /* Améliorations pour les cartes HPO horizontales */
 .horizontal-hpo-card:hover {

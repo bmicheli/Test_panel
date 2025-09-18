@@ -297,12 +297,11 @@ MEDICAL_TO_HPO_MAPPING = {
 
 STOP_WORDS = {
     'panel', 'gene', 'genes', 'list', 'testing', 'analysis', 
-    'version', 'v1', 'v2', 'v3', 'v4', 'v5', 'updated', 'related', 'dilated','defects'
+    'version', 'v1', 'v2', 'v3', 'v4', 'v5', 'updated', 'related', 'dilated','defects', 'and'
 }
 
 
 def fetch_panels(base_url):
-    """Fetch list of panels from a PanelApp instance (UK or Australia)"""
     panels = []
     url = f"{base_url}panels/"
     
@@ -314,7 +313,7 @@ def fetch_panels(base_url):
                 return pd.DataFrame(columns=["id", "name"])
             data = response.json()
             panels.extend(data.get('results', []))
-            url = data.get('next')  # For pagination
+            url = data.get('next') 
     except Exception as e:
         logger.error(f"Exception while fetching panels: {e}")
         return pd.DataFrame(columns=["id", "name"])
@@ -322,7 +321,6 @@ def fetch_panels(base_url):
     return pd.DataFrame(panels)
 
 def fetch_panel_genes(base_url, panel_id):
-    """Fetch gene list for a specific panel ID with detailed gene information"""
     url = f"{base_url}panels/{panel_id}/"
     response = requests.get(url, timeout=10)
     if response.status_code != 200:
@@ -332,7 +330,6 @@ def fetch_panel_genes(base_url, panel_id):
     genes = panel_data.get("genes", [])
     
     def format_omim_links(omim_list):
-        """Format OMIM IDs as clickable links"""
         if not omim_list:
             return ""
         
@@ -344,7 +341,6 @@ def fetch_panel_genes(base_url, panel_id):
         return " | ".join(links) if links else ""
     
     def format_hgnc_link(hgnc_id):
-        """Format HGNC ID as clickable link"""
         if not hgnc_id:
             return ""
         
@@ -365,7 +361,6 @@ def fetch_panel_genes(base_url, panel_id):
         for g in genes
     ])
     
-    # Return panel data which includes name, version, and other metadata
     panel_info = {
         "name": panel_data.get("name"),
         "version": panel_data.get("version"),
@@ -379,7 +374,6 @@ def fetch_panel_genes(base_url, panel_id):
 
 @lru_cache(maxsize=200)
 def fetch_panel_genes_cached(base_url, panel_id):
-    """Cached version of fetch_panel_genes - avoids repeated API calls"""
     try:
         return fetch_panel_genes(base_url, panel_id)
     except Exception as e:
@@ -388,16 +382,13 @@ def fetch_panel_genes_cached(base_url, panel_id):
 
 @lru_cache(maxsize=500)
 def fetch_hpo_term_details_cached(term_id):
-    """Cached version of HPO term fetching"""
     return fetch_hpo_term_details(term_id)
 
 @lru_cache(maxsize=100)
 def fetch_panel_disorders_cached(base_url, panel_id):
-    """Cached version of panel disorders fetching"""
     return fetch_panel_disorders(base_url, panel_id)
 
 def fetch_panels_parallel(uk_ids=None, au_ids=None, max_workers=5):
-    """Fetch multiple panels in parallel instead of sequentially"""
     results = {}
     
     if not uk_ids and not au_ids:
@@ -428,7 +419,6 @@ def fetch_panels_parallel(uk_ids=None, au_ids=None, max_workers=5):
     return results
 
 def fetch_hpo_terms_parallel(hpo_terms, max_workers=10):
-    """Fetch multiple HPO terms in parallel"""
     if not hpo_terms:
         return []
     
@@ -455,8 +445,6 @@ def fetch_hpo_terms_parallel(hpo_terms, max_workers=10):
     return results
 
 def load_internal_panels_from_files(directory_path="data/internal_panels"):
-    """Load internal panels directly from .txt files in the specified directory"""
-    
     internal_data = []
     panel_info = []
     
@@ -541,7 +529,7 @@ def load_internal_panels_from_files(directory_path="data/internal_panels"):
                     'panel_id': panel_id,
                     'panel_name': panel_name,
                     'gene_symbol': gene,
-                    'confidence_level': 3  # Default to Green confidence
+                    'confidence_level': 3  
                 })
         
         except Exception as e:
@@ -554,7 +542,6 @@ def load_internal_panels_from_files(directory_path="data/internal_panels"):
     return internal_df, internal_panels
 
 def clean_confidence_level_fast(df):
-    """Vectorized confidence level cleaning - much faster than original"""
     if 'confidence_level' not in df.columns:
         return df
     
@@ -578,7 +565,6 @@ def clean_confidence_level_fast(df):
     return df
 
 def deduplicate_genes_fast(df_all):
-    """Fast gene deduplication with proper confidence handling"""
     if df_all.empty:
         return df_all
     
@@ -595,7 +581,6 @@ def deduplicate_genes_fast(df_all):
                                 ascending=[False, True])
 
 def fetch_panel_disorders(base_url, panel_id):
-    """Fetch disorders associated with a panel to extract HPO terms"""
     try:
         base_url = base_url.rstrip('/')
         url = f"{base_url}/panels/{panel_id}/"
@@ -630,7 +615,6 @@ def fetch_panel_disorders(base_url, panel_id):
         return []
 
 def search_hpo_terms(query, limit=100):
-    """Search for HPO terms using the JAX ontology API"""
     if not query or len(query.strip()) < 2:
         return []
     
@@ -653,7 +637,6 @@ def search_hpo_terms(query, limit=100):
         return []
 
 def fetch_hpo_term_details(term_id):
-    """Fetch detailed information for an HPO term"""
     try:
         url = f"https://ontology.jax.org/api/hp/terms/{term_id}"
         response = requests.get(url, timeout=5)
@@ -678,7 +661,6 @@ def fetch_hpo_term_details(term_id):
         }
 
 def get_hpo_terms_from_panels(uk_ids=None, au_ids=None):
-    """Extract HPO terms from Australia panels"""
     all_hpo_terms = set() 
     if au_ids:
         for panel_id in au_ids:
@@ -688,7 +670,6 @@ def get_hpo_terms_from_panels(uk_ids=None, au_ids=None):
     return list(all_hpo_terms)
 
 def create_upset_plot(gene_sets, panel_names):
-    """Create an UpSet plot for visualizing intersections of multiple sets"""
     from itertools import combinations, chain
     
     all_genes = set()
@@ -862,7 +843,6 @@ def create_upset_plot(gene_sets, panel_names):
     return fig
 
 def panel_options(df):
-    """Generate options for panel dropdowns"""
     options = []
     for _, row in df.iterrows():
         version_text = f" v{row['version']}" if 'version' in row and pd.notna(row['version']) else ""
@@ -871,7 +851,6 @@ def panel_options(df):
     return options
 
 def internal_options(df):
-    """Generate options for internal panel dropdowns"""
     options = []
     for _, row in df.iterrows():
         version_text = f" v{row['version']}" if 'version' in row and pd.notna(row['version']) else ""
@@ -881,7 +860,6 @@ def internal_options(df):
     return options
 
 def generate_panel_summary(uk_ids, au_ids, internal_ids, confs, manual_genes_list, panels_uk_df, panels_au_df, internal_panels):
-    """Generate a formatted summary of panels and genes"""
     summary_parts = []
     
     def get_confidence_notation(conf_list):
@@ -907,7 +885,6 @@ def generate_panel_summary(uk_ids, au_ids, internal_ids, confs, manual_genes_lis
     
     confidence_suffix = get_confidence_notation(confs)
     
-    # Process UK panels
     if uk_ids:
         for panel_id in uk_ids:
             panel_row = panels_uk_df[panels_uk_df['id'] == panel_id]
@@ -917,7 +894,6 @@ def generate_panel_summary(uk_ids, au_ids, internal_ids, confs, manual_genes_lis
                 version = f"_v{panel_info['version']}" if pd.notna(panel_info.get('version')) else ""
                 summary_parts.append(f"PanelApp_UK({panel_id})/{panel_name}{version}{confidence_suffix}")
     
-    # Process AU panels
     if au_ids:
         for panel_id in au_ids:
             panel_row = panels_au_df[panels_au_df['id'] == panel_id]
@@ -927,7 +903,6 @@ def generate_panel_summary(uk_ids, au_ids, internal_ids, confs, manual_genes_lis
                 version = f"_v{panel_info['version']}" if pd.notna(panel_info.get('version')) else ""
                 summary_parts.append(f"PanelApp_AUS({panel_id})/{panel_name}{version}{confidence_suffix}")
     
-    # Process Internal panels
     if internal_ids:
         for panel_id in internal_ids:
             panel_row = internal_panels[internal_panels['panel_id'] == panel_id]
@@ -936,16 +911,12 @@ def generate_panel_summary(uk_ids, au_ids, internal_ids, confs, manual_genes_lis
                 base_name = panel_info.get('base_name', panel_info['panel_name'])
                 summary_parts.append(f"Panel_HUG/{base_name}")
     
-    # Add manual genes
     if manual_genes_list:
         summary_parts.extend(manual_genes_list)
     
     return ",".join(summary_parts)
 
 def extract_medical_keywords_enhanced(panel_names):
-    """
-    Version améliorée de l'extraction de mots-clés médicaux
-    """
     if not panel_names:
         return []
     
@@ -956,60 +927,43 @@ def extract_medical_keywords_enhanced(panel_names):
         if not name:
             continue
         
-        # Nettoyage et normalisation
         cleaned_name = name.lower().strip()
-        
-        # Remplacer les caractères spéciaux par des espaces
         cleaned_name = re.sub(r'[_\-/,;:()&]', ' ', cleaned_name)
         
-        # Extraire les mots significatifs
         words = re.findall(r'\b[a-zA-Z]{3,}\b', cleaned_name)
-        
-        # Traitement des mots
+
         for word in words:
             if (word not in STOP_WORDS and 
                 len(word) >= 3 and 
                 not word.isdigit() and
-                not re.match(r'^v\d+$', word)):  # Éviter les versions
-                
-                # Calculer un score basé sur la fréquence et la pertinence
+                not re.match(r'^v\d+$', word)):  
                 score = 1
                 
-                # Bonus si le mot est dans notre mapping médical
                 if word in MEDICAL_TO_HPO_MAPPING:
                     score += 5
                 
-                # Bonus pour les mots plus longs (souvent plus spécifiques)
                 if len(word) >= 6:
                     score += 1
                 
-                # Accumuler les scores
                 if word not in keyword_scores:
                     keyword_scores[word] = 0
                 keyword_scores[word] += score
     
-    # Trier par score décroissant
     sorted_keywords = sorted(keyword_scores.items(), key=lambda x: x[1], reverse=True)
     
-    # Extraire les mots-clés avec les meilleurs scores
     keywords = [word for word, score in sorted_keywords if score >= 1]
     
-    return keywords[:8]  # Limiter à 8 mots-clés maximum
+    return keywords[:8] 
 
 @lru_cache(maxsize=100)
 def search_hpo_with_fallback(query, max_results=4):  
-    """
-    Recherche HPO avec système de fallback amélioré
-    """
     results = []
     
     try:
-        # 1. Essayer d'abord notre mapping direct
         query_lower = query.lower()
         if query_lower in MEDICAL_TO_HPO_MAPPING:
-            # ← CHANGÉ: Ne plus limiter les résultats du mapping direct
-            mapped_hpo_ids = MEDICAL_TO_HPO_MAPPING[query_lower]  # Prendre TOUS les HPO du mapping
-            for hpo_id in mapped_hpo_ids[:max_results]:  # Limiter seulement après
+            mapped_hpo_ids = MEDICAL_TO_HPO_MAPPING[query_lower]  
+            for hpo_id in mapped_hpo_ids[:max_results]: 
                 try:
                     details = fetch_hpo_term_details_cached(hpo_id)
                     if details and details.get('name'):
@@ -1023,12 +977,10 @@ def search_hpo_with_fallback(query, max_results=4):
                 except:
                     continue
         
-        # 2. Si pas assez de résultats, chercher via API
         if len(results) < max_results:
             try:
                 api_results = search_hpo_via_api(query, max_results - len(results))
                 for result in api_results:
-                    # Éviter les doublons
                     if not any(r['value'] == result['value'] for r in results):
                         result['source'] = 'api'
                         result['relevance'] = 7
@@ -1036,10 +988,9 @@ def search_hpo_with_fallback(query, max_results=4):
             except Exception as e:
                 logger.warning(f"API HPO search failed for '{query}': {e}")
         
-        # 3. Si toujours pas assez, essayer des variations du mot
         if len(results) < max_results:
             variations = generate_query_variations(query)
-            for variation in variations[:2]:  # Limiter à 2 variations
+            for variation in variations[:2]:  
                 try:
                     var_results = search_hpo_via_api(variation, 1)
                     for result in var_results:
@@ -1063,9 +1014,6 @@ def search_hpo_with_fallback(query, max_results=4):
     return results[:max_results]
 
 def search_hpo_via_api(query, limit=5):
-    """
-    Recherche HPO via l'API JAX avec gestion d'erreurs améliorée
-    """
     if not query or len(query.strip()) < 2:
         return []
     
@@ -1105,18 +1053,13 @@ def search_hpo_via_api(query, limit=5):
         return []
 
 def generate_query_variations(query):
-    """
-    Génère des variations d'un terme de recherche pour améliorer les résultats HPO
-    """
     variations = []
     
-    # Version singulier/pluriel
     if query.endswith('s') and len(query) > 4:
-        variations.append(query[:-1])  # Retirer le 's'
+        variations.append(query[:-1])  
     elif not query.endswith('s'):
-        variations.append(query + 's')  # Ajouter un 's'
-    
-    # Variations communes de terminaisons médicales
+        variations.append(query + 's') 
+
     medical_variants = {
         'ic': ['ical', 'y'],  # cardiac -> cardiacal, cardiacu
         'al': ['ic'],         # neural -> neuric
@@ -1135,10 +1078,7 @@ def generate_query_variations(query):
     return variations
 
 @lru_cache(maxsize=100)
-def search_hpo_database_dynamic(query, max_results=50):  # ← CHANGÉ: 12 → 50
-    """
-    Recherche dynamique dans la base HPO - VERSION COMPLÈTE
-    """
+def search_hpo_database_dynamic(query, max_results=50):  
     if not query or len(query.strip()) < 2:
         return []
     
@@ -1146,15 +1086,14 @@ def search_hpo_database_dynamic(query, max_results=50):  # ← CHANGÉ: 12 → 5
     seen_ids = set()
     
     try:
-        # 1. Chercher avec BEAUCOUP plus de résultats
         url = f"https://ontology.jax.org/api/hp/search"
         params = {
             'q': query.strip(),
             'page': 0,
-            'limit': 100  # ← CHANGÉ: Demander 100 résultats au lieu de 17
+            'limit': 100  
         }
         
-        response = requests.get(url, params=params, timeout=10)  # Plus de temps
+        response = requests.get(url, params=params, timeout=10) 
         if response.status_code == 200:
             data = response.json()
             
@@ -1174,10 +1113,8 @@ def search_hpo_database_dynamic(query, max_results=50):  # ← CHANGÉ: 12 → 5
                         })
                         seen_ids.add(hpo_id)
         
-        # 2. Si l'API a une limite, essayer plusieurs pages
-        if len(results) >= 50:  # Si on a atteint la limite d'une page
+        if len(results) >= 50:
             try:
-                # Essayer page 2
                 params['page'] = 1
                 response2 = requests.get(url, params=params, timeout=10)
                 if response2.status_code == 200:
@@ -1196,20 +1133,16 @@ def search_hpo_database_dynamic(query, max_results=50):  # ← CHANGÉ: 12 → 5
                                 })
                                 seen_ids.add(hpo_id)
             except:
-                pass  # Page 2 optionnelle
+                pass
         
         print(f"✅ Database search found {len(results)} total results for '{query}'")
         
     except Exception as e:
         logger.warning(f"Database HPO search failed for '{query}': {e}")
     
-    return results[:max_results]  # Retourner jusqu'à 50 résultats
+    return results[:max_results] 
 
 def search_hpo_terms_by_keywords(keywords, max_per_keyword=8, exclude_hpo_ids=None):
-    """
-    VERSION COMPLÈTE - Récupère TOUS les termes disponibles
-    exclude_hpo_ids: set d'IDs HPO à exclure (pour éviter les doublons avec auto-générés)
-    """
     print(f"🚀 FUNCTION CALLED - search_hpo_terms_by_keywords with keywords: {keywords}")
     print(f"🚫 Excluding HPO IDs: {exclude_hpo_ids}")
     
@@ -1223,17 +1156,15 @@ def search_hpo_terms_by_keywords(keywords, max_per_keyword=8, exclude_hpo_ids=No
     suggested_hpo_terms = []
     processed_hpo_ids = set()
     
-    for keyword in keywords[:6]:  # Traiter max 6 mots-clés
+    for keyword in keywords[:6]:  
         try:
             keyword_results = []
             
-            # ÉTAPE 1: D'abord chercher dans notre dictionnaire
             query_lower = keyword.lower()
             if query_lower in MEDICAL_TO_HPO_MAPPING:
                 mapped_hpo_ids = MEDICAL_TO_HPO_MAPPING[query_lower]
                 
                 for hpo_id in mapped_hpo_ids:
-                    # AJOUT: Vérifier si l'HPO n'est pas dans les exclusions
                     if hpo_id in exclude_hpo_ids:
                         print(f"🚫 Skipping auto-generated HPO: {hpo_id}")
                         continue
@@ -1251,19 +1182,16 @@ def search_hpo_terms_by_keywords(keywords, max_per_keyword=8, exclude_hpo_ids=No
                     except:
                         continue
             
-            # ÉTAPE 2: Chercher dans la base de données TOUS les résultats
             try:
                 database_results = search_hpo_database_dynamic(keyword, max_results=50)
                 
                 for result in database_results:
                     hpo_id = result['value']
                     
-                    # AJOUT: Vérifier si l'HPO n'est pas dans les exclusions
                     if hpo_id in exclude_hpo_ids:
                         print(f"🚫 Skipping auto-generated HPO from database: {hpo_id}")
                         continue
                     
-                    # Éviter les doublons avec le dictionnaire
                     if not any(r['value'] == hpo_id for r in keyword_results):
                         result['relevance'] = 7
                         keyword_results.append(result)
@@ -1272,7 +1200,6 @@ def search_hpo_terms_by_keywords(keywords, max_per_keyword=8, exclude_hpo_ids=No
             
             print(f"📊 Keyword '{keyword}': {len(keyword_results)} total results (after exclusions)")
             
-            # Ajouter les résultats uniques à la liste finale
             for result in keyword_results:
                 hpo_id = result['value']
                 if hpo_id not in processed_hpo_ids:
@@ -1283,7 +1210,6 @@ def search_hpo_terms_by_keywords(keywords, max_per_keyword=8, exclude_hpo_ids=No
             logger.error(f"Error processing keyword '{keyword}': {e}")
             continue
     
-    # Trier par pertinence (dictionnaire d'abord, puis base de données)
     suggested_hpo_terms.sort(key=lambda x: (
         x.get('relevance', 0),
         -len(x.get('keyword', ''))
@@ -1293,69 +1219,17 @@ def search_hpo_terms_by_keywords(keywords, max_per_keyword=8, exclude_hpo_ids=No
     logger.info(f"✅ Found {len(suggested_hpo_terms)} HPO suggestions (mapping + database, after exclusions)")
     
     return suggested_hpo_terms
-#def search_hpo_terms_by_keywords_enhanced(keywords, max_per_keyword=4):  # ← CHANGÉ: 2 → 4
-    """
-    Version améliorée de la recherche HPO basée sur les mots-clés
-    """
-    if not keywords:
-        return []
-    
-    logger.info(f"🔍 Searching HPO terms for keywords: {keywords}")
-    
-    suggested_hpo_terms = []
-    processed_hpo_ids = set()
-    
-    # Traiter chaque mot-clé
-    for keyword in keywords[:6]:  # Limiter à 6 mots-clés pour éviter trop d'appels API
-        try:
-            # Utiliser notre fonction améliorée avec plus de résultats
-            keyword_results = search_hpo_with_fallback(keyword, max_per_keyword)
-            
-            for result in keyword_results:
-                hpo_id = result['value']
-                
-                # Éviter les doublons
-                if hpo_id not in processed_hpo_ids:
-                    processed_hpo_ids.add(hpo_id)
-                    suggested_hpo_terms.append(result)
-        
-        except Exception as e:
-            logger.error(f"Error processing keyword '{keyword}': {e}")
-            continue
-    
-    # Trier par pertinence (les résultats du mapping direct en premier)
-    suggested_hpo_terms.sort(key=lambda x: (
-        x.get('relevance', 0),
-        -len(x.get('keyword', ''))  # Préférer les mots-clés plus longs
-    ), reverse=True)
-    
-    logger.info(f"✅ Found {len(suggested_hpo_terms)} HPO suggestions")
-    
-    return suggested_hpo_terms[:12]  # ← CHANGÉ: 8 → 12 pour permettre plus de suggestions =============================================================================
 
 def extract_keywords_from_panel_names(panel_names):
-    """
-    Version mise à jour qui utilise le système amélioré
-    """
     return extract_medical_keywords_enhanced(panel_names)
 
-#def search_hpo_terms_by_keywords(keywords, max_per_keyword=4):
-    """
-    Version mise à jour qui utilise le système amélioré
-    """
-    return search_hpo_terms_by_keywords_enhanced(keywords, max_per_keyword)
-
 def validate_hpo_suggestions(panel_names, suggested_hpo_terms):
-    """
-    Fonction pour valider la qualité des suggestions HPO
-    """
     if not panel_names or not suggested_hpo_terms:
         return {"score": 0, "details": "No data to validate"}
     
     validation_score = 0
     details = []
     
-    # Extraire les mots-clés des panels
     keywords = extract_medical_keywords_enhanced(panel_names)
     
     for suggestion in suggested_hpo_terms:
@@ -1380,24 +1254,20 @@ def validate_hpo_suggestions(panel_names, suggested_hpo_terms):
     }
 
 def get_panel_names_from_selections(uk_ids, au_ids, internal_ids, panels_uk_df, panels_au_df, internal_panels):
-    """Extract panel names from current selections for keyword analysis"""
     panel_names = []
     
-    # UK panels
     if uk_ids and panels_uk_df is not None:
         for panel_id in uk_ids:
             panel_row = panels_uk_df[panels_uk_df['id'] == panel_id]
             if not panel_row.empty:
                 panel_names.append(panel_row.iloc[0]['name'])
     
-    # AU panels
     if au_ids and panels_au_df is not None:
         for panel_id in au_ids:
             panel_row = panels_au_df[panels_au_df['id'] == panel_id]
             if not panel_row.empty:
                 panel_names.append(panel_row.iloc[0]['name'])
     
-    # Internal panels
     if internal_ids and internal_panels is not None:
         for panel_id in internal_ids:
             panel_row = internal_panels[internal_panels['panel_id'] == panel_id]

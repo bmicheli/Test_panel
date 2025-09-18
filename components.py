@@ -1,8 +1,3 @@
-"""
-Simplified Interactive HPO Suggestions - Updated components.py
-Fixed horizontal suggestion cards with consistent sizing regardless of number of cards
-"""
-
 import dash_bootstrap_components as dbc
 from dash import html, dcc, dash_table
 import pandas as pd
@@ -15,7 +10,6 @@ from dash_iconify import DashIconify
 from config import *
 
 def create_header():
-	"""Create the modern header component with glass morphism"""
 	return html.Div([
 		dbc.Button(
 			[DashIconify(icon="mdi:menu", width=20)],
@@ -44,7 +38,6 @@ def create_header():
 	], className="glass-card app-header", style={"padding": "1.2rem"})
 
 def create_sidebar():
-	"""Create sidebar with glass morphism effect"""
 	return dbc.Offcanvas(
 		id="sidebar-offcanvas",
 		title=[
@@ -76,7 +69,6 @@ def create_sidebar():
 	)
 
 def create_panel_selection_card():
-	"""Create panel selection card - NO TITLE"""
 	return dbc.Card([
 		dbc.CardBody([
 			dbc.Row([
@@ -124,7 +116,6 @@ def create_panel_selection_card():
 	], className="glass-card mb-3 fade-in-up")
 
 def create_options_card():
-	"""Create options and filters card - SIMPLIFIED HPO SUGGESTIONS"""
 	return dbc.Card([
 		dbc.CardBody([
 			dbc.Row([
@@ -224,30 +215,24 @@ def create_options_card():
 	], className="glass-card mb-3 fade-in-up")
 
 def create_enhanced_hpo_suggestion_card(hpo_term, keyword, suggestion_number, total_suggestions, confidence_score=None):
-	"""
-	Carte de suggestion HPO améliorée avec boutons repositionnés de part et d'autre du code HPO
-	"""
-	
-	# Déterminer la couleur en fonction du score de confiance
 	if confidence_score and confidence_score >= 8:
-		border_color = "rgba(40, 167, 69, 0.4)"  # Vert pour haute confiance
+		border_color = "rgba(40, 167, 69, 0.4)" 
 		bg_color = "rgba(212, 237, 218, 0.3)"
 		confidence_icon = "mdi:check-circle"
 		confidence_color = "#28a745"
 	elif confidence_score and confidence_score >= 5:
-		border_color = "rgba(255, 193, 7, 0.4)"  # Orange pour confiance moyenne
+		border_color = "rgba(255, 193, 7, 0.4)"
 		bg_color = "rgba(255, 248, 225, 0.3)"
 		confidence_icon = "mdi:information"
 		confidence_color = "#ffc107"
 	else:
-		border_color = "rgba(0, 188, 212, 0.3)"  # Bleu par défaut
+		border_color = "rgba(0, 188, 212, 0.3)"
 		bg_color = "rgba(248, 249, 250, 0.5)"
 		confidence_icon = "mdi:help-circle"
 		confidence_color = "#6c757d"
 	
 	return html.Div([
 		html.Div([
-			# En-tête avec indicateur de confiance
 			html.Div([
 				html.Div([
 					DashIconify(icon=confidence_icon, width=12, style={"color": confidence_color}),
@@ -264,12 +249,11 @@ def create_enhanced_hpo_suggestion_card(hpo_term, keyword, suggestion_number, to
 					"height": "15px"
 				}),
 			], style={"marginBottom": "6px"}),
-			
-			# Nom du terme HPO (section principale) - PLUS D'ESPACE
+
 			html.Div([
 				html.Strong(hpo_term["name"], 
 						style={
-							"fontSize": "14px",  # Légèrement plus petit pour laisser plus d'espace
+							"fontSize": "14px",
 							"color": "#2c3e50", 
 							"display": "block", 
 							"marginBottom": "6px", 
@@ -278,21 +262,19 @@ def create_enhanced_hpo_suggestion_card(hpo_term, keyword, suggestion_number, to
 							"fontWeight": "600",
 							"wordWrap": "break-word",
 							"overflow": "hidden",
-							"hyphens": "auto",  # Césure automatique
-							"padding": "0 4px"  # Petit padding pour éviter que le texte touche les bords
+							"hyphens": "auto",  
+							"padding": "0 4px"
 						})
 			], style={
 				"marginBottom": "8px", 
-				"height": "55px",  # Plus d'espace pour le texte
+				"height": "55px",  
 				"display": "flex", 
 				"alignItems": "center", 
 				"justifyContent": "center",
 				"overflow": "hidden"
 			}),
 			
-			# HPO ID avec boutons de chaque côté (NOUVELLE DISPOSITION)
 			html.Div([
-				# Bouton rouge à gauche
 				dbc.Button(
 					DashIconify(icon="mdi:close", width=14),
 					id={"type": "horizontal-hpo-skip-btn", "hpo_id": hpo_term["id"], "keyword": keyword},
@@ -309,13 +291,12 @@ def create_enhanced_hpo_suggestion_card(hpo_term, keyword, suggestion_number, to
 						"backgroundColor": "#dc3545",
 						"borderColor": "#dc3545",
 						"fontSize": "10px",
-						"flexShrink": "0"  # Empêche le bouton de se rétrécir
+						"flexShrink": "0" 
 					},
 					title="Skip this suggestion",
 					n_clicks=0
 				),
-				
-				# HPO ID au centre
+
 				html.Code(hpo_term['id'], style={
 					"fontSize": "11px",
 					"backgroundColor": "#e3f2fd", 
@@ -327,12 +308,11 @@ def create_enhanced_hpo_suggestion_card(hpo_term, keyword, suggestion_number, to
 					"textAlign": "center", 
 					"color": "#1976d2", 
 					"fontWeight": "500",
-					"margin": "0 8px",  # Espace entre les boutons
-					"minWidth": "70px",  # Largeur minimale pour le code HPO
-					"flexGrow": "1"  # Prend l'espace restant
+					"margin": "0 8px",  
+					"minWidth": "70px",  
+					"flexGrow": "1" 
 				}),
-				
-				# Bouton vert à droite
+
 				dbc.Button(
 					DashIconify(icon="mdi:check", width=14),
 					id={"type": "horizontal-hpo-keep-btn", "hpo_id": hpo_term["id"], "keyword": keyword},
@@ -349,7 +329,7 @@ def create_enhanced_hpo_suggestion_card(hpo_term, keyword, suggestion_number, to
 						"backgroundColor": "#28a745",
 						"borderColor": "#28a745",
 						"fontSize": "10px",
-						"flexShrink": "0"  # Empêche le bouton de se rétrécir
+						"flexShrink": "0"  
 					},
 					title="Add to HPO terms",
 					n_clicks=0
@@ -378,20 +358,17 @@ def create_enhanced_hpo_suggestion_card(hpo_term, keyword, suggestion_number, to
 		"boxShadow": f"0 2px 6px {border_color}",
 		"transition": "all 0.2s ease",
 		"height": "120px",
-		"width": "calc(33.33% - 8px)",  # Pour 3 cartes
-		"minWidth": "200px",  # Plus large avec 3 cartes
-		"maxWidth": "250px",  # Plus d'espace disponible
+		"width": "calc(33.33% - 8px)", 
+		"minWidth": "200px",  
+		"maxWidth": "250px",  
 		"display": "flex",
 		"flexDirection": "column",
 		"overflow": "visible",
-		"margin": "1px",  # Réduit les marges
+		"margin": "1px",  
 		"flexShrink": "0"
 	})
 
 def create_hpo_loading_placeholder():
-	"""
-	Placeholder de chargement pour les suggestions HPO
-	"""
 	return html.Div([
 		html.Div([
 			html.Div(className="suggestion-loading-spinner", style={
@@ -431,10 +408,6 @@ def create_hpo_loading_placeholder():
 	})
 
 def create_hpo_debug_info(panel_names, keywords, suggestions):
-	"""
-	Composant de debug pour voir les informations de traitement HPO
-	(À utiliser uniquement en mode développement)
-	"""
 	return dbc.Collapse([
 		dbc.Card([
 			dbc.CardBody([
@@ -455,7 +428,7 @@ def create_hpo_debug_info(panel_names, keywords, suggestions):
 					html.Strong("Suggestions Details: "),
 					html.Ul([
 						html.Li(f"{s.get('keyword', 'unknown')} → {s.get('value', 'unknown')} ({s.get('source', 'unknown')})")
-						for s in suggestions[:5]  # Limiter à 5 pour l'affichage
+						for s in suggestions[:5] 
 					] if suggestions else [html.Li("No suggestions")])
 				])
 			])
@@ -470,8 +443,7 @@ def create_action_buttons():
 					DashIconify(icon="mdi:refresh", width=18, className="me-2"),
 					"Reset"
 				], id="reset-btn", color="danger", size="md", style={"fontSize": "14px"}),
-				
-				# SPACING BETWEEN BUTTONS
+
 				html.Span(style={"width": "25px", "display": "inline-block"}),
 				
 				dbc.Button([
@@ -489,12 +461,11 @@ def generate_panel_pie_chart(panel_df, panel_name, version=None):
 	conf_counts = panel_df.groupby('confidence_level').size().reset_index(name='count')
 	conf_counts = conf_counts.sort_values('confidence_level', ascending=False)
 	
-	colors = ['#d4edda', '#fff3cd', '#f8d7da']  # Green, Yellow, Red for 3,2,1
+	colors = ['#d4edda', '#fff3cd', '#f8d7da'] 
 	
 	labels = [f"{count} genes" for level, count in 
 			zip(conf_counts['confidence_level'], conf_counts['count'])]
-	
-	# SAME SIZE AS ORIGINAL
+
 	fig, ax = plt.subplots(figsize=(9, 5))  
 	ax.pie(conf_counts['count'], labels=labels, colors=colors, autopct='%1.1f%%', 
 		startangle=90, wedgeprops={'linewidth': 1, 'edgecolor': 'white'})

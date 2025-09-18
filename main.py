@@ -1,11 +1,3 @@
-"""
-Main application file for PanelBuilder
-VISUAL CHANGES ONLY - KEEP ALL ORIGINAL FUNCTIONALITY
-IMPORT FUNCTIONALITY REMOVED - Z-INDEX ISSUES FIXED
-SPINNER FULL SCREEN ADDED
-HPO SUGGESTIONS INTERACTIVES ADDED
-"""
-
 import dash
 import dash_bootstrap_components as dbc
 from dash import html, dcc, Output, Input, State, callback_context, ALL, dash_table
@@ -24,14 +16,9 @@ import numpy as np
 import concurrent.futures
 from functools import lru_cache
 
-# Import local modules
 from config import *
 from utils import *
 from components import *
-
-# =============================================================================
-# GLOBAL VARIABLES FOR PANEL DATA
-# =============================================================================
 
 panels_uk_df = None
 panels_au_df = None
@@ -39,12 +26,7 @@ internal_df = None
 internal_panels = None
 last_refresh = None
 
-# =============================================================================
-# PANEL REFRESH FUNCTIONS (ORIGINAL)
-# =============================================================================
-
 def refresh_panels():
-	"""Refresh panel data"""
 	global panels_uk_df, panels_au_df, internal_df, internal_panels, last_refresh
 	
 	try:
@@ -73,7 +55,7 @@ def refresh_panels():
 		logger.error(f"❌ Error refreshing panels: {e}")
 
 def schedule_panel_refresh():
-	schedule.every().monday.at("06:00").do(refresh_panels)
+	schedule.every().monday.at("05:00").do(refresh_panels)
 	
 	def run_scheduler():
 		while True:
@@ -92,10 +74,6 @@ def initialize_panels():
 	schedule_panel_refresh()
 	
 	logger.info(f"Initialization completed in {time.time() - start_time:.2f} seconds")
-
-# =============================================================================
-# APP INITIALIZATION
-# =============================================================================
 
 app = dash.Dash(__name__, external_stylesheets=EXTERNAL_STYLESHEETS, suppress_callback_exceptions=True)
 app.title = "PanelBuilder"
@@ -190,10 +168,6 @@ app.index_string = f'''
 '''
 
 initialize_panels()
-
-# =============================================================================
-# APP LAYOUT - AVEC LES NOUVEAUX STORES
-# =============================================================================
 
 app.layout = dbc.Container([
 	# Download component for gene export
@@ -300,10 +274,6 @@ app.layout = dbc.Container([
 	"background": "linear-gradient(135deg, #00BCD4 0%, #4DD0E1 50%, #80E5A3 100%)"
 })
 
-# =============================================================================
-# CALLBACKS - DROPDOWN OPTIONS (ORIGINAL)
-# =============================================================================
-
 @app.callback(
 	[Output("dropdown-uk", "options"),
 	Output("dropdown-au", "options"), 
@@ -316,10 +286,6 @@ def update_dropdown_options(_):
 	internal_options_list = internal_options(internal_panels) if internal_panels is not None else []
 	
 	return uk_options, au_options, internal_options_list
-
-# =============================================================================
-# CALLBACKS - SIDEBAR MANAGEMENT (ORIGINAL)
-# =============================================================================
 
 @app.callback(
 	Output("sidebar-offcanvas", "is_open"),
@@ -341,7 +307,6 @@ def toggle_sidebar(n_clicks, is_open):
 	Output("hpo-search-dropdown", "value", allow_duplicate=True),
 	Output("hpo-search-dropdown", "options", allow_duplicate=True),
 	Output("sidebar-offcanvas", "is_open", allow_duplicate=True),
-	# AJOUT: Reset des éléments de la page
 	Output("gene-table-output", "children", allow_duplicate=True),
 	Output("venn-container", "children", allow_duplicate=True),
 	Output("hpo-terms-table-container", "children", allow_duplicate=True),
@@ -387,7 +352,6 @@ def apply_preset(n_clicks_list, current_hpo_options):
 			}
 			updated_hpo_options.append(option)
 	
-	# AJOUT: Valeurs de reset pour tous les éléments
 	reset_gene_table = ""
 	reset_venn = ""
 	reset_hpo_table = ""
@@ -400,16 +364,11 @@ def apply_preset(n_clicks_list, current_hpo_options):
 	reset_gene_data = {}
 	
 	return (uk_panels, au_panels, internal_panels, conf_levels, manual_genes_text, 
-			hpo_terms, updated_hpo_options, False,  # Fermer la sidebar
-			# Reset des éléments de la page
+			hpo_terms, updated_hpo_options, False,  
 			reset_gene_table, reset_venn, reset_hpo_table, reset_gene_list, 
 			reset_panel_summary, reset_rejected_hpo, reset_suggestion_counter,
 			reset_code_section_style, reset_venn_row_style, reset_gene_data)
 			
-# =============================================================================
-# CALLBACKS - HPO MANAGEMENT (ORIGINAL)
-# =============================================================================
-
 @app.callback(
 	Output("hpo-search-dropdown", "value", allow_duplicate=True),
 	Output("hpo-search-dropdown", "options", allow_duplicate=True),
@@ -436,11 +395,10 @@ def auto_generate_hpo_from_panels_preview(au_ids, current_hpo_values, current_hp
 	
 	for hpo_details in hpo_details_list:
 		hpo_id = hpo_details['id']
-		# MODIFICATION: Marquer comme auto-généré avec préfixe vert
 		option = {
 			"label": f"🟢 {hpo_details['name']} ({hpo_id})",
 			"value": hpo_id,
-			"_auto_generated": True  # Marqueur interne
+			"_auto_generated": True  
 		}
 		new_hpo_options.append(option)
 		new_hpo_values.append(hpo_id)
@@ -451,7 +409,6 @@ def auto_generate_hpo_from_panels_preview(au_ids, current_hpo_values, current_hp
 	
 	all_values = list(set(current_values + new_hpo_values))
 	
-	# Fusionner les options en gardant le marquage auto-généré
 	existing_option_values = [opt["value"] for opt in current_options]
 	all_options = current_options.copy()
 	
@@ -462,6 +419,7 @@ def auto_generate_hpo_from_panels_preview(au_ids, current_hpo_values, current_hp
 	logger.info(f"🔄 Final options count: {len(all_options)}, Auto-generated: {len([o for o in all_options if o.get('_auto_generated')])}")
 	
 	return all_values, all_options, html.Div()
+
 @app.callback(
 	Output("hpo-search-dropdown", "options", allow_duplicate=True),
 	Input("hpo-search-dropdown", "search_value"),
@@ -487,15 +445,6 @@ def update_hpo_options(search_value, current_values, current_options):
 	
 	return all_options
 
-# =============================================================================
-# NOUVEAUX CALLBACKS POUR LES SUGGESTIONS HPO SIMPLIFIÉES
-# =============================================================================
-
-"""
-Callback amélioré pour les suggestions HPO dans main.py
-Remplace le callback existant update_horizontal_hpo_suggestions
-"""
-
 @app.callback(
 	[Output("smart-hpo-suggestions-container", "children"),
 	Output("smart-hpo-suggestions-container", "style"),
@@ -505,19 +454,17 @@ Remplace le callback existant update_horizontal_hpo_suggestions
 	Input("dropdown-internal", "value"),
 	Input("rejected-hpo-store", "data"),
 	Input("suggestion-counter-store", "data"),
-	Input("hpo-search-dropdown", "options")],  # AJOUT: Déclencher quand les options changent
-	[State("hpo-search-dropdown", "value")],  # CHANGÉ: Mettre value en State seulement
+	Input("hpo-search-dropdown", "options")], 
+	[State("hpo-search-dropdown", "value")], 
 	prevent_initial_call=True
 )
 def update_horizontal_hpo_suggestions_enhanced(uk_ids, au_ids, internal_ids, rejected_hpo_terms, 
 											counter, current_hpo_options, current_hpo_values):  
-	# Log pour debug
 	logger.info(f"🔄 HPO suggestions callback triggered. Options available: {len(current_hpo_options or [])}")
 	if current_hpo_options:
 		auto_gen_count = len([o for o in current_hpo_options if o.get('_auto_generated', False) or o.get('label', '').startswith('🟢')])
 		logger.info(f"🟢 Auto-generated HPO options found: {auto_gen_count}")
 		
-	# Style de container fixe
 	fixed_container_style = {
 		"height": "130px",
 		"borderRadius": "10px",
@@ -528,7 +475,6 @@ def update_horizontal_hpo_suggestions_enhanced(uk_ids, au_ids, internal_ids, rej
 		"alignItems": "stretch"
 	}
 	
-	# Initialiser les données de debug
 	debug_data = {
 		"panel_names": [],
 		"keywords": [],
@@ -539,13 +485,11 @@ def update_horizontal_hpo_suggestions_enhanced(uk_ids, au_ids, internal_ids, rej
 	
 	start_time = time.time()
 
-	# AJOUT: Extraire les HPO auto-générés DÈS LE DÉBUT
 	auto_generated_hpos = set()
 	if current_hpo_options:
 		logger.info(f"🔍 Checking {len(current_hpo_options)} HPO options for auto-generated markers")
 		for option in current_hpo_options:
-			logger.info(f"📋 Option: {option}")  # Log complet de l'option
-			# Vérifier les marqueurs d'auto-génération
+			logger.info(f"📋 Option: {option}") 
 			if (option.get("_auto_generated", False) or 
 				option.get("label", "").startswith("🟢")):
 				auto_generated_hpos.add(option["value"])
@@ -553,7 +497,6 @@ def update_horizontal_hpo_suggestions_enhanced(uk_ids, au_ids, internal_ids, rej
 
 	logger.info(f"🚫 Found {len(auto_generated_hpos)} auto-generated HPO terms to exclude: {auto_generated_hpos}")
 
-	# Vérifier si des panels sont sélectionnés
 	if not any([uk_ids, au_ids, internal_ids]):
 		return ([
 			html.Div([
@@ -578,7 +521,6 @@ def update_horizontal_hpo_suggestions_enhanced(uk_ids, au_ids, internal_ids, rej
 		}, debug_data)
 	
 	try:
-		# Étape 1: Récupérer les noms des panels
 		panel_names = get_panel_names_from_selections(
 			uk_ids, au_ids, internal_ids, 
 			panels_uk_df, panels_au_df, internal_panels
@@ -611,7 +553,6 @@ def update_horizontal_hpo_suggestions_enhanced(uk_ids, au_ids, internal_ids, rej
 				"justifyContent": "center"
 			}, debug_data)
 		
-		# Étape 2: Extraire les mots-clés médicaux (version améliorée)
 		keywords = extract_keywords_from_panel_names(panel_names)
 		debug_data["keywords"] = keywords
 		
@@ -641,15 +582,11 @@ def update_horizontal_hpo_suggestions_enhanced(uk_ids, au_ids, internal_ids, rej
 				"justifyContent": "center"
 			}, debug_data)
 		
-		# Étape 3: Rechercher les termes HPO (version améliorée)
 		suggested_terms = search_hpo_terms_by_keywords(keywords, max_per_keyword=4, exclude_hpo_ids=auto_generated_hpos)
 		debug_data["suggestions"] = suggested_terms
 		
 		logger.info(f"🎯 Found {len(suggested_terms)} HPO suggestions (excluding {len(auto_generated_hpos)} auto-generated)")
 
-
-
-		# Étape 4: Filtrer les termes rejetés, déjà sélectionnés ET auto-générés
 		rejected_hpo_terms = rejected_hpo_terms or []
 		current_hpo_values = current_hpo_values or []
 
@@ -657,12 +594,11 @@ def update_horizontal_hpo_suggestions_enhanced(uk_ids, au_ids, internal_ids, rej
 		for term in suggested_terms:
 			if (term["value"] not in rejected_hpo_terms and 
 				term["value"] not in current_hpo_values and
-				term["value"] not in auto_generated_hpos):  # AJOUT: Exclure les auto-générés
+				term["value"] not in auto_generated_hpos):  
 				filtered_suggestions.append(term)
 
 		logger.info(f"✅ {len(filtered_suggestions)} suggestions after filtering (excluded auto-generated)")
-		
-		# Étape 5: Gérer le cas où toutes les suggestions ont été traitées
+
 		if not filtered_suggestions:
 			return ([
 				html.Div([
@@ -698,20 +634,18 @@ def update_horizontal_hpo_suggestions_enhanced(uk_ids, au_ids, internal_ids, rej
 				"justifyContent": "center"
 			}, debug_data)
 		
-		# Étape 6: Créer les cartes de suggestion (max 3)
 		top_suggestions = filtered_suggestions[:3]
 		total_available = len(filtered_suggestions)
 		
 		suggestion_cards = []
 		for i, suggestion in enumerate(top_suggestions):
-			# Calculer un score de confiance basé sur la source et la pertinence
 			confidence_score = suggestion.get('relevance', 5)
 			
 			try:
 				card = create_enhanced_hpo_suggestion_card(
 					{
 						"id": suggestion["value"],
-						"name": suggestion["label"].split(" (")[0]  # Extraire le nom sans l'ID
+						"name": suggestion["label"].split(" (")[0]  
 					},
 					suggestion["keyword"],
 					i + 1,
@@ -719,7 +653,6 @@ def update_horizontal_hpo_suggestions_enhanced(uk_ids, au_ids, internal_ids, rej
 					confidence_score
 				)
 				
-				# Ajouter une classe CSS basée sur le score de confiance
 				if confidence_score >= 8:
 					card.className += " confidence-high"
 				elif confidence_score >= 5:
@@ -727,7 +660,6 @@ def update_horizontal_hpo_suggestions_enhanced(uk_ids, au_ids, internal_ids, rej
 				else:
 					card.className += " confidence-low"
 				
-				# Ajouter l'animation d'entrée
 				card.className += " hpo-suggestion-enter"
 				
 				suggestion_cards.append(card)
@@ -737,7 +669,6 @@ def update_horizontal_hpo_suggestions_enhanced(uk_ids, au_ids, internal_ids, rej
 				debug_data["errors"].append(f"Card creation error: {str(e)}")
 				continue
 		
-		# Si aucune carte n'a pu être créée
 		if not suggestion_cards:
 			debug_data["errors"].append("No suggestion cards could be created")
 			return ([
@@ -762,7 +693,6 @@ def update_horizontal_hpo_suggestions_enhanced(uk_ids, au_ids, internal_ids, rej
 				"justifyContent": "center"
 			}, debug_data)
 		
-		# Ajouter un indicateur de progression si il y a plus de suggestions disponibles
 		if total_available > 3:
 			progress_indicator = html.Div([
 				html.Small(f"+{total_available - 3} more available", 
@@ -775,7 +705,6 @@ def update_horizontal_hpo_suggestions_enhanced(uk_ids, au_ids, internal_ids, rej
 			})
 			suggestion_cards.append(progress_indicator)
 		
-		# Calculer le temps de traitement
 		debug_data["processing_time"] = round(time.time() - start_time, 3)
 		logger.info(f"⏱️ HPO processing completed in {debug_data['processing_time']}s")
 		
@@ -809,7 +738,6 @@ def update_horizontal_hpo_suggestions_enhanced(uk_ids, au_ids, internal_ids, rej
 			"justifyContent": "center"
 		}, debug_data)
 
-# Callback optionnel pour afficher les informations de debug (en mode développement)
 @app.callback(
 	Output("hpo-debug-collapse", "is_open"),
 	Output("hpo-debug-collapse", "children"),
@@ -818,9 +746,6 @@ def update_horizontal_hpo_suggestions_enhanced(uk_ids, au_ids, internal_ids, rej
 	prevent_initial_call=True
 )
 def toggle_hpo_debug_info(n_clicks, debug_data):
-	"""
-	Toggle pour afficher/masquer les informations de debug HPO
-	"""
 	if not n_clicks:
 		raise dash.exceptions.PreventUpdate
 	
@@ -835,7 +760,6 @@ def toggle_hpo_debug_info(n_clicks, debug_data):
 	
 	return not (n_clicks % 2 == 0), debug_content
 
-# Callback pour la validation et l'amélioration continue
 @app.callback(
 	Output("hpo-quality-feedback", "children"),
 	Input("validate-hpo-suggestions", "n_clicks"),
@@ -843,9 +767,6 @@ def toggle_hpo_debug_info(n_clicks, debug_data):
 	prevent_initial_call=True
 )
 def validate_hpo_quality(n_clicks, debug_data):
-	"""
-	Validation de la qualité des suggestions HPO pour amélioration continue
-	"""
 	if not n_clicks or not debug_data:
 		raise dash.exceptions.PreventUpdate
 	
@@ -854,7 +775,6 @@ def validate_hpo_quality(n_clicks, debug_data):
 	
 	validation_result = validate_hpo_suggestions(panel_names, suggestions)
 	
-	# Créer un indicateur visuel de la qualité
 	quality_percentage = validation_result.get("percentage", 0)
 	
 	if quality_percentage >= 70:
@@ -888,29 +808,23 @@ def validate_hpo_quality(n_clicks, debug_data):
 	prevent_initial_call=True
 )
 def handle_horizontal_hpo_keep(n_clicks_list, current_hpo_values, current_hpo_options, counter):
-	"""Handle horizontal HPO suggestion acceptance - add to HPO dropdown and trigger new suggestions"""
 	ctx = callback_context
 	
 	if not ctx.triggered or all(n == 0 for n in n_clicks_list):
 		raise dash.exceptions.PreventUpdate
 	
-	# Find which keep button was clicked
 	button_id = ctx.triggered[0]["prop_id"].split(".")[0]
 	hpo_data = json.loads(button_id)
 	hpo_id = hpo_data["hpo_id"]
 	
-	# Initialize current values and options if None
 	current_values = current_hpo_values or []
 	current_options = current_hpo_options or []
 	
-	# Check if HPO term is already selected
 	if hpo_id in current_values:
 		return current_values, current_options, counter + 1
 	
-	# Check if HPO term option already exists
 	existing_option_values = [opt["value"] for opt in current_options]
 	if hpo_id not in existing_option_values:
-		# Fetch the HPO term details and add it to options
 		try:
 			hpo_details = fetch_hpo_term_details_cached(hpo_id)
 			new_option = {
@@ -920,13 +834,11 @@ def handle_horizontal_hpo_keep(n_clicks_list, current_hpo_values, current_hpo_op
 			current_options.append(new_option)
 		except Exception as e:
 			logger.error(f"Error fetching details for HPO term {hpo_id}: {e}")
-			# Add basic option even if details fetch fails
 			current_options.append({
 				"label": f"{hpo_id} (Details unavailable)",
 				"value": hpo_id
 			})
 	
-	# Add the HPO term to selected values
 	new_values = current_values + [hpo_id]
 	
 	return new_values, current_options, counter + 1
@@ -940,18 +852,15 @@ def handle_horizontal_hpo_keep(n_clicks_list, current_hpo_values, current_hpo_op
 	prevent_initial_call=True
 )
 def handle_horizontal_hpo_skip(n_clicks_list, rejected_hpo_terms, counter):
-	"""Handle horizontal HPO suggestion rejection - add to rejected list and trigger new suggestions"""
 	ctx = callback_context
 	
 	if not ctx.triggered or all(n == 0 for n in n_clicks_list):
 		raise dash.exceptions.PreventUpdate
 	
-	# Find which skip button was clicked
 	button_id = ctx.triggered[0]["prop_id"].split(".")[0]
 	hpo_data = json.loads(button_id)
 	hpo_id = hpo_data["hpo_id"]
 	
-	# Add to rejected list
 	rejected_hpo_terms = rejected_hpo_terms or []
 	if hpo_id not in rejected_hpo_terms:
 		rejected_hpo_terms.append(hpo_id)
@@ -959,29 +868,23 @@ def handle_horizontal_hpo_skip(n_clicks_list, rejected_hpo_terms, counter):
 	return rejected_hpo_terms, counter + 1
 
 def handle_compact_hpo_keep(n_clicks_list, current_hpo_values, current_hpo_options, counter):
-	"""Handle compact HPO suggestion acceptance - add to HPO dropdown and trigger new suggestions"""
 	ctx = callback_context
 	
 	if not ctx.triggered or all(n == 0 for n in n_clicks_list):
 		raise dash.exceptions.PreventUpdate
 	
-	# Find which keep button was clicked
 	button_id = ctx.triggered[0]["prop_id"].split(".")[0]
 	hpo_data = json.loads(button_id)
 	hpo_id = hpo_data["hpo_id"]
 	
-	# Initialize current values and options if None
 	current_values = current_hpo_values or []
 	current_options = current_hpo_options or []
 	
-	# Check if HPO term is already selected
 	if hpo_id in current_values:
 		return current_values, current_options, counter + 1
 	
-	# Check if HPO term option already exists
 	existing_option_values = [opt["value"] for opt in current_options]
 	if hpo_id not in existing_option_values:
-		# Fetch the HPO term details and add it to options
 		try:
 			hpo_details = fetch_hpo_term_details_cached(hpo_id)
 			new_option = {
@@ -991,13 +894,11 @@ def handle_compact_hpo_keep(n_clicks_list, current_hpo_values, current_hpo_optio
 			current_options.append(new_option)
 		except Exception as e:
 			logger.error(f"Error fetching details for HPO term {hpo_id}: {e}")
-			# Add basic option even if details fetch fails
 			current_options.append({
 				"label": f"{hpo_id} (Details unavailable)",
 				"value": hpo_id
 			})
 	
-	# Add the HPO term to selected values
 	new_values = current_values + [hpo_id]
 	
 	return new_values, current_options, counter + 1
@@ -1011,32 +912,26 @@ def handle_compact_hpo_keep(n_clicks_list, current_hpo_values, current_hpo_optio
 	prevent_initial_call=True
 )
 def handle_compact_hpo_skip(n_clicks_list, rejected_hpo_terms, counter):
-	"""Handle compact HPO suggestion rejection - add to rejected list and trigger new suggestions"""
 	ctx = callback_context
 	
 	if not ctx.triggered or all(n == 0 for n in n_clicks_list):
 		raise dash.exceptions.PreventUpdate
 	
-	# Find which skip button was clicked
 	button_id = ctx.triggered[0]["prop_id"].split(".")[0]
 	hpo_data = json.loads(button_id)
 	hpo_id = hpo_data["hpo_id"]
 	
-	# Add to rejected list
 	rejected_hpo_terms = rejected_hpo_terms or []
 	if hpo_id not in rejected_hpo_terms:
 		rejected_hpo_terms.append(hpo_id)
 	
 	return rejected_hpo_terms, counter + 1
 	
-	# Check if HPO term is already selected
 	if hpo_id in current_values:
 		return current_values, current_options, counter + 1
 	
-	# Check if HPO term option already exists
 	existing_option_values = [opt["value"] for opt in current_options]
 	if hpo_id not in existing_option_values:
-		# Fetch the HPO term details and add it to options
 		try:
 			hpo_details = fetch_hpo_term_details_cached(hpo_id)
 			new_option = {
@@ -1046,13 +941,11 @@ def handle_compact_hpo_skip(n_clicks_list, rejected_hpo_terms, counter):
 			current_options.append(new_option)
 		except Exception as e:
 			logger.error(f"Error fetching details for HPO term {hpo_id}: {e}")
-			# Add basic option even if details fetch fails
 			current_options.append({
 				"label": f"{hpo_id} (Details unavailable)",
 				"value": hpo_id
 			})
 	
-	# Add the HPO term to selected values
 	new_values = current_values + [hpo_id]
 	
 	return new_values, current_options, counter + 1
@@ -1066,18 +959,15 @@ def handle_compact_hpo_skip(n_clicks_list, rejected_hpo_terms, counter):
 	prevent_initial_call=True
 )
 def handle_smart_hpo_skip(n_clicks_list, rejected_hpo_terms, counter):
-	"""Handle smart HPO suggestion rejection - add to rejected list and trigger new suggestion"""
 	ctx = callback_context
 	
 	if not ctx.triggered or all(n == 0 for n in n_clicks_list):
 		raise dash.exceptions.PreventUpdate
 	
-	# Find which skip button was clicked
 	button_id = ctx.triggered[0]["prop_id"].split(".")[0]
 	hpo_data = json.loads(button_id)
 	hpo_id = hpo_data["hpo_id"]
 	
-	# Add to rejected list
 	rejected_hpo_terms = rejected_hpo_terms or []
 	if hpo_id not in rejected_hpo_terms:
 		rejected_hpo_terms.append(hpo_id)
@@ -1091,22 +981,16 @@ def handle_smart_hpo_skip(n_clicks_list, rejected_hpo_terms, counter):
 	prevent_initial_call=True
 )
 def reset_smart_hpo_suggestions(n_clicks):
-	"""Reset smart HPO suggestions - clear rejected list and get new suggestions"""
 	if n_clicks:
 		return [], 0
 	raise dash.exceptions.PreventUpdate
 	
-# =============================================================================
-# CALLBACKS - SPINNER MANAGEMENT (OPTIMISÉ PYTHON PUR)
-# =============================================================================
-
 @app.callback(
 	Output("fullscreen-spinner", "className", allow_duplicate=True),
 	Input("load-genes-btn", "n_clicks"),
 	prevent_initial_call=True
 )
 def show_spinner_immediately(n_clicks):
-	"""Affiche le spinner immédiatement quand on clique sur Build Panel"""
 	if n_clicks:
 		return "fullscreen-spinner-overlay"
 	return "fullscreen-spinner-overlay hide"
@@ -1117,14 +1001,9 @@ def show_spinner_immediately(n_clicks):
 	prevent_initial_call=True
 )
 def hide_spinner_when_done(gene_table_content):
-	"""Masque le spinner quand les résultats sont affichés"""
 	if gene_table_content and gene_table_content != "":
 		return "fullscreen-spinner-overlay hide"
 	return dash.no_update
-
-# =============================================================================
-# CALLBACKS - UI MANAGEMENT (ORIGINAL - IMPORT REMOVED)
-# =============================================================================
 
 @app.callback(
 	Output("generate-code-section", "style"),
@@ -1144,10 +1023,6 @@ def toggle_code_visibility(n_build, n_reset):
 	elif triggered_id == "reset-btn":
 		return {"display": "none"}, {"display": "none"}
 	return dash.no_update, dash.no_update
-
-# =============================================================================
-# CALLBACKS - RESET (AVEC LES NOUVEAUX STORES)
-# =============================================================================
 
 @app.callback(
 	[Output("dropdown-uk", "value"),
@@ -1173,10 +1048,6 @@ def handle_reset_with_hpo_stores(n_reset):
 
 	return None, None, None, [3, 2], "", [], [], "", "", "", [], "", [], 0
 
-# =============================================================================
-# CALLBACKS - MAIN PANEL PROCESSING (ORIGINAL WITH GENE SEARCH + SPINNER)
-# =============================================================================
-
 @app.callback(
 	[Output("gene-table-output", "children", allow_duplicate=True),
 	Output("venn-container", "children", allow_duplicate=True),
@@ -1199,7 +1070,6 @@ def handle_reset_with_hpo_stores(n_reset):
 def display_panel_genes_optimized(n_clicks, selected_uk_ids, selected_au_ids, 
 								selected_internal_ids, selected_confidences, 
 								manual_genes, selected_hpo_terms, current_hpo_options):
-	"""OPTIMIZED version of the main callback with ORIGINAL FUNCTIONALITY"""
 	if not n_clicks:
 		return "", "", "", [], [], [], "", {}
 
@@ -1216,11 +1086,9 @@ def display_panel_genes_optimized(n_clicks, selected_uk_ids, selected_au_ids,
 	panel_names = {}      
 	panel_versions = {}    
 
-	# PARALLEL FETCHING - This is the biggest performance improvement
 	if selected_uk_ids or selected_au_ids:
 		panel_results = fetch_panels_parallel(selected_uk_ids, selected_au_ids)
 		
-		# Process results from parallel fetching
 		for result_key, (df, panel_info) in panel_results.items():
 			if df.empty:
 				continue
@@ -1228,14 +1096,11 @@ def display_panel_genes_optimized(n_clicks, selected_uk_ids, selected_au_ids,
 			source, pid_str = result_key.split('_', 1)
 			pid = int(pid_str)
 			
-			# Fast confidence cleaning
 			df = clean_confidence_level_fast(df)
 			panel_dataframes[result_key] = df.copy()
 			
-			# Filter by confidence
 			df_filtered = df[df["confidence_level"].isin(selected_confidences)].copy()
 			
-			# Ensure required columns exist with default values
 			required_cols = ["gene_symbol", "confidence_level", "omim_id", "hgnc_id", "entity_type", "biotype", "mode_of_inheritance"]
 			for col in required_cols:
 				if col not in df_filtered.columns:
@@ -1244,7 +1109,6 @@ def display_panel_genes_optimized(n_clicks, selected_uk_ids, selected_au_ids,
 			genes_combined.append(df_filtered[required_cols])
 			gene_sets[result_key] = set(df_filtered["gene_symbol"])
 			
-			# Panel names
 			panel_name = f"{source} Panel {pid}"
 			panel_version = None
 			if panel_info:
@@ -1256,16 +1120,13 @@ def display_panel_genes_optimized(n_clicks, selected_uk_ids, selected_au_ids,
 			panel_names[result_key] = panel_name
 			panel_versions[result_key] = panel_version
 
-	# Process internal panels (optimized)
 	if selected_internal_ids:
 		for pid in selected_internal_ids:
 			try:
 				panel_df = internal_df[internal_df["panel_id"] == pid].copy()
 				
-				# Fast confidence cleaning
 				panel_df = clean_confidence_level_fast(panel_df)
 				
-				# Add missing columns for internal panels with default values
 				panel_df["omim_id"] = ""
 				panel_df["hgnc_id"] = ""
 				panel_df["entity_type"] = "gene"
@@ -1288,7 +1149,6 @@ def display_panel_genes_optimized(n_clicks, selected_uk_ids, selected_au_ids,
 				print(f"Error processing internal panel {pid}: {e}")
 				continue
 
-	# Handle manual genes
 	if manual_genes:
 		manual_genes_list = [g.strip() for g in manual_genes.strip().splitlines() if g.strip()]
 		if manual_genes_list:  
@@ -1310,22 +1170,18 @@ def display_panel_genes_optimized(n_clicks, selected_uk_ids, selected_au_ids,
 	if not genes_combined:
 		return "No gene found.", "", "", [], all_hpo_terms, updated_hpo_options, "", {}
 
-	# FAST GENE PROCESSING
 	df_all = pd.concat(genes_combined, ignore_index=True)
 	df_all = df_all.copy()
 	
-	# Remove any rows with completely missing gene symbols
 	df_all = df_all[df_all["gene_symbol"].notna() & (df_all["gene_symbol"] != "")]
 	
 	if df_all.empty:
 		return "No valid genes found.", "", "", [], all_hpo_terms, updated_hpo_options, "", {}
 	
-	# Fast deduplication
 	df_unique = deduplicate_genes_fast(df_all)
 	
 	print(f"Data processing completed in {time.time() - start_time:.2f} seconds")
 	
-	# Rename columns for display
 	df_unique = df_unique.rename(columns={
 		"gene_symbol": "Gene Symbol",
 		"confidence_level": "Confidence",
@@ -1336,7 +1192,6 @@ def display_panel_genes_optimized(n_clicks, selected_uk_ids, selected_au_ids,
 		"mode_of_inheritance": "Mode of Inheritance"
 	})
 
-	# ORIGINAL SUMMARY TABLE WITH GENE SEARCH FUNCTIONALITY - NOW WRAPPED IN GLASS CARD
 	total_genes = pd.DataFrame({"Number of genes in panel": [df_unique.shape[0]]})
 	summary = df_unique.groupby("Confidence").size().reset_index(name="Number of genes")
 	summary_table = dbc.Row([
@@ -1344,7 +1199,6 @@ def display_panel_genes_optimized(n_clicks, selected_uk_ids, selected_au_ids,
 		dbc.Col(dash_table.DataTable(columns=[{"name": col, "id": col} for col in ["Confidence", "Number of genes"]], data=summary.to_dict("records"), style_cell={"textAlign": "left"}, style_table={"width": "100%"}), width=8)
 	])
 
-	# Visualization logic (Venn diagrams/UpSet plots) - ORIGINAL
 	venn_component = html.Div()
 	all_sets = {k: v for k, v in gene_sets.items() if len(v) > 0}
 	total_sets = len(all_sets)
@@ -1468,7 +1322,6 @@ def display_panel_genes_optimized(n_clicks, selected_uk_ids, selected_au_ids,
 			"justifyContent": "center"
 		})
 
-	# OPTIMIZED HPO PROCESSING - Use parallel fetching
 	hpo_details = []
 	if all_hpo_terms:
 		hpo_details = fetch_hpo_terms_parallel(all_hpo_terms)
@@ -1479,18 +1332,16 @@ def display_panel_genes_optimized(n_clicks, selected_uk_ids, selected_au_ids,
 
 	confidence_levels_present = sorted(df_unique["Confidence"].unique(), reverse=True)
 
-	# Create buttons with proper IDs and confidence-based colors
 	buttons = []
 	for level in confidence_levels_present:
-		# Set button color based on confidence level
 		if level == 3:
-			button_color = "success"  # Green
+			button_color = "success"
 		elif level == 2:
-			button_color = "warning"  # Amber/Orange
+			button_color = "warning"
 		elif level == 1:
-			button_color = "danger"   # Red
+			button_color = "danger"  
 		else:
-			button_color = "secondary"  # Default
+			button_color = "secondary"
 			
 		button = dbc.Button(
 			f"Gene list (confidence {level})", 
@@ -1502,19 +1353,17 @@ def display_panel_genes_optimized(n_clicks, selected_uk_ids, selected_au_ids,
 		)
 		buttons.append(button)
 
-	# Add manual genes button if present
 	if manual_genes_list:
 		manual_button = dbc.Button(
 			"Manual Genes", 
 			id={"type": "btn-confidence", "level": "Manual"}, 
-			color="info",  # Light blue for manual
+			color="info",  
 			className="me-1 mb-1", 
 			n_clicks=0,
 			size="sm"
 		)
 		buttons.append(manual_button)
 
-	# Define enhanced table columns
 	table_columns = [
 		{"name": "Gene Symbol", "id": "Gene Symbol", "type": "text"},
 		{"name": "OMIM ID", "id": "OMIM ID", "type": "text", "presentation": "markdown"},
@@ -1565,7 +1414,6 @@ def display_panel_genes_optimized(n_clicks, selected_uk_ids, selected_au_ids,
 		for level in confidence_levels_present
 	}
 
-	# Handle manual genes table
 	if manual_genes_list:
 		manual_table_data = []
 		for gene in manual_genes_list:
@@ -1615,13 +1463,10 @@ def display_panel_genes_optimized(n_clicks, selected_uk_ids, selected_au_ids,
 
 	table_output = html.Div(id="table-per-confidence")
 
-	# ORIGINAL SUMMARY LAYOUT WITH GENE SEARCH BAR - NOW WRAPPED IN GLASS CARD
 	summary_layout = dbc.Card([
 		dbc.CardBody([
-			# Summary table first
 			html.Div(summary_table, id="summary-table-content", style={"marginBottom": "20px"}),
 			
-			# GENE SEARCH BAR AND CONFIDENCE BUTTONS ROW
 			dbc.Row([
 				dbc.Col([
 					dbc.InputGroup([
@@ -1633,7 +1478,6 @@ def display_panel_genes_optimized(n_clicks, selected_uk_ids, selected_au_ids,
 					html.Div(id="gene-check-result", className="mt-2", style={"fontStyle": "italic"})
 				], width=3),
 				dbc.Col([
-					# Gene list confidence buttons moved here
 					html.Div(buttons, id="confidence-buttons-container", style={"display": "flex", "flexWrap": "wrap", "gap": "5px"})
 				], width=3)
 			], style={"marginTop": "10px"})
@@ -1644,20 +1488,16 @@ def display_panel_genes_optimized(n_clicks, selected_uk_ids, selected_au_ids,
 
 	return (html.Div([
 			html.Div(summary_layout, className="mb-3"),
-			# Only table output - buttons are now in the summary card
-			html.Div(table_output, style={"marginBottom": "30px"})  # Added spacing
+			html.Div(table_output, style={"marginBottom": "30px"}) 
 		]), 
 		venn_component, 
 		hpo_table_component,  
 		df_unique["Gene Symbol"].tolist(),
 		all_hpo_terms,       
 		updated_hpo_options,
-		"",  # Clear panel summary
+		"",
 		tables_by_level)
 
-# =============================================================================
-# CALLBACKS - GENE SEARCH (KEEP ORIGINAL)
-# =============================================================================
 
 @app.callback(
 	Output("gene-check-result", "children"),
@@ -1677,10 +1517,6 @@ def check_gene_in_panel(n_clicks, n_submit, gene_name, gene_list):
 	else:
 		return f"Gene '{gene_name}' is NOT present in the custom panel.", ""
 
-# =============================================================================
-# CALLBACKS - TABLE INTERACTION (ORIGINAL)
-# =============================================================================
-
 @app.callback(
 	Output("table-per-confidence", "children"),
 	Input({"type": "btn-confidence", "level": ALL}, "n_clicks"),
@@ -1692,7 +1528,6 @@ def update_table_by_confidence(btn_clicks, data):
 	if not ctx.triggered:
 		return ""
 	
-	# Check if any button was actually clicked (not just initialized)
 	if all(n == 0 for n in btn_clicks):
 		return ""
 	
@@ -1701,10 +1536,6 @@ def update_table_by_confidence(btn_clicks, data):
 	level = triggered_dict["level"]
 	
 	return data.get(level, "")
-
-# =============================================================================
-# CALLBACKS - CODE GENERATION (ORIGINAL - FONCTION RENOMMÉE POUR ÉVITER CONFLIT)
-# =============================================================================
 
 @app.callback(
 	Output("panel-summary-output", "value", allow_duplicate=True),
@@ -1718,13 +1549,11 @@ def update_table_by_confidence(btn_clicks, data):
 	prevent_initial_call=True
 )
 def create_panel_summary_callback(n_clicks, uk_ids, au_ids, internal_ids, confs, manual, hpo_terms):
-	"""RENOMMÉ POUR ÉVITER CONFLIT AVEC FONCTION UTILS"""
 	if not n_clicks:
 		raise dash.exceptions.PreventUpdate
 		
 	manual_list = [g.strip() for g in manual.strip().splitlines() if g.strip()] if manual else []
 	
-	# Appeler la fonction du module utils avec le bon nom
 	summary = generate_panel_summary(
 		uk_ids or [], 
 		au_ids or [], 
@@ -1737,10 +1566,6 @@ def create_panel_summary_callback(n_clicks, uk_ids, au_ids, internal_ids, confs,
 	)
 	
 	return summary
-
-# =============================================================================
-# CALLBACKS - EXPORT (ORIGINAL)
-# =============================================================================
 
 @app.callback(
 	Output("download-genes", "data"),
@@ -1775,10 +1600,6 @@ def export_gene_list(n_clicks, gene_list, uk_ids, au_ids, internal_ids, manual_g
 		return dcc.send_string(content, filename)
 	
 	raise dash.exceptions.PreventUpdate
-
-# =============================================================================
-# CLIENTSIDE CALLBACKS FOR UX (ORIGINAL - KEEP CLIPBOARD FUNCTIONALITY)
-# =============================================================================
 
 app.clientside_callback(
 	"""
