@@ -218,24 +218,24 @@ def create_enhanced_hpo_suggestion_card(hpo_term, keyword, suggestion_number, to
 	if confidence_score and confidence_score >= 8:
 		border_color = "rgba(40, 167, 69, 0.4)" 
 		bg_color = "rgba(212, 237, 218, 0.3)"
-		confidence_icon = "mdi:check-circle"
+		confidence_icon = "bi bi-check-circle-fill"
 		confidence_color = "#28a745"
 	elif confidence_score and confidence_score >= 5:
 		border_color = "rgba(255, 193, 7, 0.4)"
 		bg_color = "rgba(255, 248, 225, 0.3)"
-		confidence_icon = "mdi:information"
+		confidence_icon = "bi bi-info-circle-fill"
 		confidence_color = "#ffc107"
 	else:
 		border_color = "rgba(0, 188, 212, 0.3)"
 		bg_color = "rgba(248, 249, 250, 0.5)"
-		confidence_icon = "mdi:help-circle"
+		confidence_icon = "bi bi-question-circle-fill"
 		confidence_color = "#6c757d"
 	
 	return html.Div([
 		html.Div([
 			html.Div([
 				html.Div([
-					DashIconify(icon=confidence_icon, width=12, style={"color": confidence_color}),
+					html.I(className=confidence_icon, style={"color": confidence_color, "fontSize": "14px"}),
 					html.Small(f"from '{keyword}'", style={
 						"fontSize": "9px", 
 						"color": "#6c757d", 
@@ -276,7 +276,7 @@ def create_enhanced_hpo_suggestion_card(hpo_term, keyword, suggestion_number, to
 			
 			html.Div([
 				dbc.Button(
-					DashIconify(icon="mdi:close", width=14),
+					html.I(className="bi bi-x-lg", style={"fontSize": "14px"}),  # croix
 					id={"type": "horizontal-hpo-skip-btn", "hpo_id": hpo_term["id"], "keyword": keyword},
 					color="danger",
 					size="sm",
@@ -290,7 +290,6 @@ def create_enhanced_hpo_suggestion_card(hpo_term, keyword, suggestion_number, to
 						"justifyContent": "center",
 						"backgroundColor": "#dc3545",
 						"borderColor": "#dc3545",
-						"fontSize": "10px",
 						"flexShrink": "0" 
 					},
 					title="Skip this suggestion",
@@ -314,7 +313,7 @@ def create_enhanced_hpo_suggestion_card(hpo_term, keyword, suggestion_number, to
 				}),
 
 				dbc.Button(
-					DashIconify(icon="mdi:check", width=14),
+					html.I(className="bi bi-check-lg", style={"fontSize": "14px"}),  # check
 					id={"type": "horizontal-hpo-keep-btn", "hpo_id": hpo_term["id"], "keyword": keyword},
 					color="success",
 					size="sm",
@@ -328,7 +327,6 @@ def create_enhanced_hpo_suggestion_card(hpo_term, keyword, suggestion_number, to
 						"justifyContent": "center",
 						"backgroundColor": "#28a745",
 						"borderColor": "#28a745",
-						"fontSize": "10px",
 						"flexShrink": "0"  
 					},
 					title="Add to HPO terms",
