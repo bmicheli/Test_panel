@@ -381,7 +381,6 @@ def apply_preset(n_clicks_list, current_hpo_options):
             reset_gene_table, reset_venn, reset_hpo_table, reset_gene_list,
             reset_panel_summary, reset_rejected_hpo, reset_suggestion_counter,
             reset_code_section_style, reset_venn_row_style, reset_gene_data)
-
 		
 @app.callback(
 	Output("hpo-search-dropdown", "value", allow_duplicate=True),
@@ -1511,7 +1510,6 @@ def display_panel_genes_optimized(n_clicks, selected_uk_ids, selected_au_ids,
 		updated_hpo_options,
 		"",
 		tables_by_level)
-
 
 @app.callback(
 	Output("gene-check-result", "children"),

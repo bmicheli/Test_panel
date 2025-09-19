@@ -1,25 +1,12 @@
-import re
-import requests
-from functools import lru_cache
-import json
-import time
-from collections import Counter
-import requests
-import pandas as pd
-import numpy as np
-import time
 import concurrent.futures
 from functools import lru_cache
-import base64
-import json
 import os
 import hashlib
 import re
-from datetime import datetime
-from pathlib import Path
 import matplotlib.pyplot as plt
-from matplotlib_venn import venn2, venn3
-import io
+import numpy as np
+import pandas as pd
+import requests
 from config import *
 
 
@@ -959,128 +946,6 @@ def extract_medical_keywords_enhanced(panel_names):
     keywords = [word for word, score in sorted_keywords if score >= 1]
     
     return keywords[:8] 
-
-@lru_cache(maxsize=100)
-def search_hpo_with_fallback(query, max_results=4):  
-    results = []
-    
-    try:
-        query_lower = query.lower()
-        if query_lower in MEDICAL_TO_HPO_MAPPING:
-            mapped_hpo_ids = MEDICAL_TO_HPO_MAPPING[query_lower]  
-            for hpo_id in mapped_hpo_ids[:max_results]: 
-                try:
-                    details = fetch_hpo_term_details_cached(hpo_id)
-                    if details and details.get('name'):
-                        results.append({
-                            'value': hpo_id,
-                            'label': f"{details['name']} ({hpo_id})",
-                            'keyword': query,
-                            'source': 'mapping',
-                            'relevance': 10
-                        })
-                except:
-                    continue
-        
-        if len(results) < max_results:
-            try:
-                api_results = search_hpo_via_api(query, max_results - len(results))
-                for result in api_results:
-                    if not any(r['value'] == result['value'] for r in results):
-                        result['source'] = 'api'
-                        result['relevance'] = 7
-                        results.append(result)
-            except Exception as e:
-                logger.warning(f"API HPO search failed for '{query}': {e}")
-        
-        if len(results) < max_results:
-            variations = generate_query_variations(query)
-            for variation in variations[:2]:  
-                try:
-                    var_results = search_hpo_via_api(variation, 1)
-                    for result in var_results:
-                        if not any(r['value'] == result['value'] for r in results):
-                            result['source'] = 'variation'
-                            result['relevance'] = 5
-                            results.append(result)
-                            if len(results) >= max_results:
-                                break
-                except:
-                    continue
-                
-                if len(results) >= max_results:
-                    break
-    
-    except Exception as e:
-        logger.error(f"Error in enhanced HPO search for '{query}': {e}")
-    
-    # Trier par pertinence
-    results.sort(key=lambda x: x.get('relevance', 0), reverse=True)
-    return results[:max_results]
-
-def search_hpo_via_api(query, limit=5):
-    if not query or len(query.strip()) < 2:
-        return []
-    
-    try:
-        url = f"https://ontology.jax.org/api/hp/search"
-        params = {
-            'q': query.strip(),
-            'page': 0,
-            'limit': min(limit, 10)
-        }
-        
-        response = requests.get(url, params=params, timeout=8)
-        response.raise_for_status()
-        
-        data = response.json()
-        results = []
-        
-        if 'terms' in data and data['terms']:
-            for term in data['terms'][:limit]:
-                hpo_id = term.get('id', '')
-                hpo_name = term.get('name', '')
-                
-                if hpo_id and hpo_name:
-                    results.append({
-                        'value': hpo_id,
-                        'label': f"{hpo_name} ({hpo_id})",
-                        'keyword': query
-                    })
-        
-        return results
-        
-    except requests.exceptions.RequestException as e:
-        logger.warning(f"HPO API request failed for '{query}': {e}")
-        return []
-    except Exception as e:
-        logger.error(f"Unexpected error in HPO API search for '{query}': {e}")
-        return []
-
-def generate_query_variations(query):
-    variations = []
-    
-    if query.endswith('s') and len(query) > 4:
-        variations.append(query[:-1])  
-    elif not query.endswith('s'):
-        variations.append(query + 's') 
-
-    medical_variants = {
-        'ic': ['ical', 'y'],  # cardiac -> cardiacal, cardiacu
-        'al': ['ic'],         # neural -> neuric
-        'ism': ['tic'],       # metabolism -> metabolic
-        'ity': ['ic'],        # spasticity -> spastic
-        'osis': ['otic'],     # neurosis -> neurotic
-        'pathy': ['pathic'],  # neuropathy -> neuropathic
-    }
-    
-    for suffix, replacements in medical_variants.items():
-        if query.endswith(suffix):
-            base = query[:-len(suffix)]
-            for replacement in replacements:
-                variations.append(base + replacement)
-    
-    return variations
 
 @lru_cache(maxsize=100)
 def search_hpo_database_dynamic(query, max_results=50):  

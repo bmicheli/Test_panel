@@ -1,4 +1,3 @@
-import os
 import logging
 
 # =============================================================================
@@ -7,13 +6,6 @@ import logging
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-# =============================================================================
-# PERFORMANCE CONFIGURATION
-# =============================================================================
-
-CACHE_TIMEOUT = 600  
-MAX_CONCURRENT_FETCHES = 10  
 
 # =============================================================================
 # API CONFIGURATION
@@ -37,18 +29,6 @@ PANEL_PRESETS = {
         "manual": [],
         "hpo_terms": [] 
     }
-}
-
-# =============================================================================
-# UI CONFIGURATION
-# =============================================================================
-
-# Color mappings adapted from VariantVisualizer
-CONFIDENCE_COLORS = {
-    3: '#d4edda',  # Green
-    2: '#fff3cd',  # Amber
-    1: '#f8d7da',  # Red
-    0: '#d1ecf1'   # Manual (light blue)
 }
 
 # =============================================================================

@@ -366,45 +366,6 @@ def create_enhanced_hpo_suggestion_card(hpo_term, keyword, suggestion_number, to
 		"flexShrink": "0"
 	})
 
-def create_hpo_loading_placeholder():
-	return html.Div([
-		html.Div([
-			html.Div(className="suggestion-loading-spinner", style={
-				"width": "20px",
-				"height": "20px",
-				"border": "2px solid #f3f3f3",
-				"borderTop": "2px solid #00BCD4",
-				"borderRadius": "50%",
-				"animation": "spin 1s linear infinite",
-				"margin": "0 auto 8px"
-			}),
-			html.Small("Loading suggestions...", style={
-				"fontSize": "10px",
-				"color": "#6c757d",
-				"textAlign": "center",
-				"display": "block"
-			})
-		], style={
-			"display": "flex",
-			"flexDirection": "column",
-			"alignItems": "center",
-			"justifyContent": "center",
-			"height": "100%",
-			"padding": "10px"
-		})
-	], style={
-		"background": "rgba(248, 249, 250, 0.8)",
-		"border": "2px dashed rgba(0, 188, 212, 0.3)",
-		"borderRadius": "8px",
-		"height": "120px",
-		"width": "calc(25% - 10px)",
-		"minWidth": "180px",
-		"margin": "2px",
-		"display": "flex",
-		"alignItems": "center",
-		"justifyContent": "center"
-	})
-
 def create_hpo_debug_info(panel_names, keywords, suggestions):
 	return dbc.Collapse([
 		dbc.Card([
