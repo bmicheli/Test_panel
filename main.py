@@ -172,7 +172,7 @@ initialize_panels()
 app.layout = dbc.Container([
 	# Download component for gene export
 	dcc.Download(id="download-genes"),
-	
+	html.Div(style={"height": "10px"}),
 	# NOUVEAU: Spinner full screen
 	html.Div(
 		id="fullscreen-spinner",
@@ -268,7 +268,7 @@ app.layout = dbc.Container([
 	dcc.Store(id="suggestion-counter-store", data=0),
 	dcc.Store(id="hpo-debug-info-store", data={}),
 	dcc.Store(id="hpo-quality-metrics", data={}),
-	
+
 ], fluid=True, style={
 	"minHeight": "100vh",
 	"background": "linear-gradient(135deg, #00BCD4 0%, #4DD0E1 50%, #80E5A3 100%)"
