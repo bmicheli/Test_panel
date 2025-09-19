@@ -25,7 +25,7 @@ from config import *
 
 MEDICAL_TO_HPO_MAPPING = {
     # Système nerveux
-    "epilepsy": ["HP:0001250", "HP:0002197", "HP:0011097", "HP:0007359", "HP:0001252", "HP:0010818"],
+    "epilepsy": ["HP:0001250", "HP:0002197", "HP:0011097", "HP:0007359", "HP:0010818"],
     "seizure": ["HP:0001250", "HP:0011097", "HP:0007359", "HP:0002069", "HP:0010818"],
     "status epilepticus": ["HP:0011143", "HP:0007359", "HP:0011097", "HP:0001250"],
     "infantile spasms": ["HP:0012469", "HP:0001250", "HP:0032793", "HP:0011097"],
@@ -297,7 +297,12 @@ MEDICAL_TO_HPO_MAPPING = {
 
 STOP_WORDS = {
     'panel', 'gene', 'genes', 'list', 'testing', 'analysis', 
-    'version', 'v1', 'v2', 'v3', 'v4', 'v5', 'updated', 'related', 'dilated','defects', 'and'
+    'version', 'v1', 'v2', 'v3', 'v4', 'v5', 'updated', 'related', 'dilated','defects', 'and', 'of',
+	'in', 'with', 'for', 'the', 'a', 'to', 'on', 'by', 'is', 'as', 'at', 'from', 'or', 'an', 'be', 'this', 'that',
+	'are', 'it', 'its', 'not', 'but', 'which', 'all', 'also', 'have', 'has', 'more', 'other', 'such', 'these', 'their',
+	'can', 'may', 'used', 'use', 'used', 'using', 'than', 'most', 'some', 'any', 'each', 'one', 'two', 'three', 'four', 'five',
+	'syndrome', 'disease', 'disorder', 'disorders', 'syndromes', 'condition', 'conditions', 'familial', 'hereditary',
+	'primary', 'secondary', 'non', 'sporadic', 'common', 'rare', 'known', 'unknown', 'other', 'various', 'variety',
 }
 
 
