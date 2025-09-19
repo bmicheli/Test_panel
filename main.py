@@ -322,53 +322,67 @@ def toggle_sidebar(n_clicks, is_open):
 	prevent_initial_call=True
 )
 def apply_preset(n_clicks_list, current_hpo_options):
-	ctx = callback_context
-	if not ctx.triggered or all(n == 0 for n in n_clicks_list):
-		raise dash.exceptions.PreventUpdate
-	
-	prop_id = ctx.triggered[0]["prop_id"]
-	preset_key = json.loads(prop_id.split(".")[0])["index"]
-	preset = PANEL_PRESETS[preset_key]
-	
-	uk_panels = preset.get("uk_panels", [])
-	au_panels = preset.get("au_panels", [])
-	internal_panels = preset.get("internal", [])
-	conf_levels = preset.get("conf", [3, 2])
-	manual_genes_list = preset.get("manual", [])
-	manual_genes_text = "\n".join(manual_genes_list) if manual_genes_list else ""
-	hpo_terms = preset.get("hpo_terms", [])
-	
-	updated_hpo_options = current_hpo_options or []
-	existing_option_values = [opt["value"] for opt in updated_hpo_options]
-	
-	new_hpo_terms = [term for term in hpo_terms if term not in existing_option_values]
-	if new_hpo_terms:
-		hpo_details_list = fetch_hpo_terms_parallel(new_hpo_terms)
+    ctx = callback_context
+    if not ctx.triggered or all(n == 0 for n in n_clicks_list):
+        raise dash.exceptions.PreventUpdate
+
+    prop_id = ctx.triggered[0]["prop_id"]
+    preset_key = json.loads(prop_id.split(".")[0])["index"]
+    preset = PANEL_PRESETS[preset_key]
+
+    # --- Étape 1 : reset complet (comme bouton Reset)
+    uk_panels = None
+    au_panels = None
+    internal_panels = None
+    conf_levels = [3, 2]
+    manual_genes_text = ""
+    hpo_terms = []
+    updated_hpo_options = []
+
+    reset_gene_table = ""
+    reset_venn = ""
+    reset_hpo_table = ""
+    reset_gene_list = []
+    reset_panel_summary = ""
+    reset_rejected_hpo = []
+    reset_suggestion_counter = 0
+    reset_code_section_style = {"display": "none"}
+    reset_venn_row_style = {"display": "none"}
+    reset_gene_data = {}
+
+    # --- Étape 2 : appliquer le preset par-dessus
+    if "uk_panels" in preset:
+        uk_panels = preset["uk_panels"]
+    if "au_panels" in preset:
+        au_panels = preset["au_panels"]
+    if "internal" in preset:
+        internal_panels = preset["internal"]
+    if "conf" in preset:
+        conf_levels = preset["conf"]
+    if "manual" in preset:
+        manual_genes_text = "\n".join(preset["manual"]) if preset["manual"] else ""
+    if "hpo_terms" in preset:
+        hpo_terms = preset["hpo_terms"]
+
+    # Met à jour les options HPO si besoin
+    existing_option_values = [opt["value"] for opt in updated_hpo_options]
+    new_hpo_terms = [term for term in hpo_terms if term not in existing_option_values]
+    if new_hpo_terms:
+        hpo_details_list = fetch_hpo_terms_parallel(new_hpo_terms)
+        for hpo_details in hpo_details_list:
+            option = {
+                "label": f"{hpo_details['name']} ({hpo_details['id']})",
+                "value": hpo_details['id']
+            }
+            updated_hpo_options.append(option)
+
+    return (uk_panels, au_panels, internal_panels, conf_levels, manual_genes_text,
+            hpo_terms, updated_hpo_options, False,
+            reset_gene_table, reset_venn, reset_hpo_table, reset_gene_list,
+            reset_panel_summary, reset_rejected_hpo, reset_suggestion_counter,
+            reset_code_section_style, reset_venn_row_style, reset_gene_data)
+
 		
-		for hpo_details in hpo_details_list:
-			option = {
-				"label": f"{hpo_details['name']} ({hpo_details['id']})",
-				"value": hpo_details['id']
-			}
-			updated_hpo_options.append(option)
-	
-	reset_gene_table = ""
-	reset_venn = ""
-	reset_hpo_table = ""
-	reset_gene_list = []
-	reset_panel_summary = ""
-	reset_rejected_hpo = []
-	reset_suggestion_counter = 0
-	reset_code_section_style = {"display": "none"}
-	reset_venn_row_style = {"display": "none"}
-	reset_gene_data = {}
-	
-	return (uk_panels, au_panels, internal_panels, conf_levels, manual_genes_text, 
-			hpo_terms, updated_hpo_options, False,  
-			reset_gene_table, reset_venn, reset_hpo_table, reset_gene_list, 
-			reset_panel_summary, reset_rejected_hpo, reset_suggestion_counter,
-			reset_code_section_style, reset_venn_row_style, reset_gene_data)
-			
 @app.callback(
 	Output("hpo-search-dropdown", "value", allow_duplicate=True),
 	Output("hpo-search-dropdown", "options", allow_duplicate=True),
