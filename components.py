@@ -366,34 +366,6 @@ def create_enhanced_hpo_suggestion_card(hpo_term, keyword, suggestion_number, to
 		"flexShrink": "0"
 	})
 
-def create_hpo_debug_info(panel_names, keywords, suggestions):
-	return dbc.Collapse([
-		dbc.Card([
-			dbc.CardBody([
-				html.H6("Debug HPO Processing", className="mb-3"),
-				html.Div([
-					html.Strong("Panel Names: "),
-					html.Span(", ".join(panel_names) if panel_names else "None")
-				], className="mb-2"),
-				html.Div([
-					html.Strong("Extracted Keywords: "),
-					html.Span(", ".join(keywords) if keywords else "None")
-				], className="mb-2"),
-				html.Div([
-					html.Strong("HPO Suggestions: "),
-					html.Span(f"{len(suggestions)} found" if suggestions else "None")
-				], className="mb-2"),
-				html.Div([
-					html.Strong("Suggestions Details: "),
-					html.Ul([
-						html.Li(f"{s.get('keyword', 'unknown')} → {s.get('value', 'unknown')} ({s.get('source', 'unknown')})")
-						for s in suggestions[:5] 
-					] if suggestions else [html.Li("No suggestions")])
-				])
-			])
-		])
-	], id="hpo-debug-collapse", is_open=False)
-
 def create_action_buttons():
 	return dbc.Card([
 		dbc.CardBody([

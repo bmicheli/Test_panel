@@ -289,7 +289,8 @@ STOP_WORDS = {
 	'are', 'it', 'its', 'not', 'but', 'which', 'all', 'also', 'have', 'has', 'more', 'other', 'such', 'these', 'their',
 	'can', 'may', 'used', 'use', 'used', 'using', 'than', 'most', 'some', 'any', 'each', 'one', 'two', 'three', 'four', 'five',
 	'syndrome', 'disease', 'disorder', 'disorders', 'syndromes', 'condition', 'conditions', 'familial', 'hereditary',
-	'primary', 'secondary', 'non', 'sporadic', 'common', 'rare', 'known', 'unknown', 'other', 'various', 'variety',
+	'primary', 'secondary', 'non', 'sporadic', 'common', 'rare', 'known', 'unknown', 'other', 'various', 'variety', 'au', 'esc',
+	'uk', 'aus', 'united', 'kingdom', 'america', 'united states', 'america', 'european', 'europe', 'international', 'global', 'worldwide'
 }
 
 

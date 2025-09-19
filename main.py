@@ -181,7 +181,7 @@ app.layout = dbc.Container([
 			html.Div([
 				html.Div(className="custom-spinner"),
 				html.Div("Building Panel...", className="spinner-text"),
-				html.Div("Please wait while we process your data", className="spinner-subtext")
+				html.Div("", className="spinner-subtext")
 			], className="spinner-container")
 		]
 	),
