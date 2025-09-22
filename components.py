@@ -423,7 +423,7 @@ def generate_panel_pie_chart(panel_df, panel_name, version=None):
 		html.Img(src=f"data:image/png;base64,{data}", 
 				style={"maxWidth": "100%", "height": "auto", "display": "block", "margin": "auto"})
 	], style={
-		"border": "1px solid #999", 
+		"border": "none", 
 		"padding": "10px", 
 		"borderRadius": "8px", 
 		"maxWidth": "100%", 
@@ -444,11 +444,10 @@ def create_hpo_terms_table(hpo_details):
 		table_data.append({
 			"HPO ID": term["id"],
 			"Term Name": term["name"],
-			"Definition": term["definition"][:80] + "..." if len(term["definition"]) > 80 else term["definition"]
+			"Definition": term["definition"][:120] + "..." if len(term["definition"]) > 120 else term["definition"]
 		})
 	
 	return html.Div([
-		html.H5(f"HPO Terms ({len(hpo_details)})", className="mb-3", style={"textAlign": "center", "fontSize": "16px"}),
 		dash_table.DataTable(
 			columns=[
 				{"name": "HPO ID", "id": "HPO ID"},
@@ -460,9 +459,10 @@ def create_hpo_terms_table(hpo_details):
 				"overflowX": "auto",
 				"height": "520px",  
 				"overflowY": "auto",
-				"border": "1px solid #ddd",
+				"border": "none",
 				"borderRadius": "8px",
-				"width": "100%"
+				"width": "100%",
+				"backgroundColor": "transparent"
 			},
 			style_cell={
 				"textAlign": "left",
@@ -472,22 +472,28 @@ def create_hpo_terms_table(hpo_details):
 				"whiteSpace": "normal",
 				"height": "auto",
 				"minWidth": "60px",
-				"maxWidth": "120px"
+				"maxWidth": "120px",
+				"color": "#2c3e50",
+				"backgroundColor": "transparent",
+				"border": "none"
 			},
 			style_header={
 				"fontWeight": "bold",
-				"backgroundColor": "#f8f9fa",
-				"border": "1px solid #ddd",
-				"fontSize": "12px"
+				"backgroundColor": "rgba(255, 255, 255, 0.4)",
+				"border": "none",
+				"fontSize": "12px",
+				"color": "#2c3e50",
+				"borderBottom": "1px solid rgba(200, 200, 200, 0.3)"
 			},
 			style_data={
-				"backgroundColor": "#ffffff",
-				"border": "1px solid #eee"
+				"backgroundColor": "transparent",
+				"border": "none",
+				"borderBottom": "1px solid rgba(200, 200, 200, 0.3)"
 			},
 			style_data_conditional=[
 				{
 					"if": {"row_index": "odd"},
-					"backgroundColor": "#f8f9fa"
+					"backgroundColor": "rgba(255, 255, 255, 0.1)"
 				}
 			],
 			page_action="native",  
@@ -502,10 +508,10 @@ def create_hpo_terms_table(hpo_details):
 			tooltip_duration=None
 		)
 	], style={
-		"border": "1px solid #999", 
+		"border": "none", 
 		"padding": "10px", 
 		"borderRadius": "8px",
-		"backgroundColor": "#f8f9fa",
+		"background": "transparent",
 		"width": "100%",
 		"height": "100%",  
 		"display": "flex",

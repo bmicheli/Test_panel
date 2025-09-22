@@ -1254,7 +1254,7 @@ def display_panel_genes_optimized(n_clicks, selected_uk_ids, selected_au_ids,
 				html.Img(src=f"data:image/png;base64,{data}", 
 						style={"maxWidth": "100%", "height": "auto", "display": "block", "margin": "auto"})
 			], style={
-				"border": "1px solid #999", 
+				"border": "none", 
 				"padding": "10px", 
 				"borderRadius": "8px", 
 				"maxWidth": "100%", 
@@ -1290,7 +1290,7 @@ def display_panel_genes_optimized(n_clicks, selected_uk_ids, selected_au_ids,
 					html.Img(src=f"data:image/png;base64,{data}", 
 							style={"maxWidth": "100%", "height": "auto", "display": "block", "margin": "auto"})
 				], style={
-					"border": "1px solid #999", 
+					"border": "none", 
 					"padding": "10px", 
 					"borderRadius": "8px", 
 					"maxWidth": "100%", 
