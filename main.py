@@ -397,8 +397,7 @@ def auto_generate_hpo_from_panels_preview(au_ids, current_hpo_values, current_hp
 		return current_hpo_values or [], current_hpo_options or [], html.Div()
 	
 	panel_hpo_terms = get_hpo_terms_from_panels(uk_ids=None, au_ids=au_ids)
-	logger.info(f"🔍 Found {len(panel_hpo_terms)} HPO terms from AU panels: {panel_hpo_terms}")
-	
+
 	if not panel_hpo_terms:
 		return current_hpo_values or [], current_hpo_options or [], html.Div()
 	
@@ -416,8 +415,7 @@ def auto_generate_hpo_from_panels_preview(au_ids, current_hpo_values, current_hp
 		}
 		new_hpo_options.append(option)
 		new_hpo_values.append(hpo_id)
-		logger.info(f"✅ Marking HPO as auto-generated: {hpo_id} - {hpo_details['name']}")
-	
+
 	current_values = current_hpo_values or []
 	current_options = current_hpo_options or []
 	
@@ -429,8 +427,6 @@ def auto_generate_hpo_from_panels_preview(au_ids, current_hpo_values, current_hp
 	for option in new_hpo_options:
 		if option["value"] not in existing_option_values:
 			all_options.append(option)
-	
-	logger.info(f"🔄 Final options count: {len(all_options)}, Auto-generated: {len([o for o in all_options if o.get('_auto_generated')])}")
 	
 	return all_values, all_options, html.Div()
 
@@ -474,10 +470,8 @@ def update_hpo_options(search_value, current_values, current_options):
 )
 def update_horizontal_hpo_suggestions_enhanced(uk_ids, au_ids, internal_ids, rejected_hpo_terms, 
 											counter, current_hpo_options, current_hpo_values):  
-	logger.info(f"🔄 HPO suggestions callback triggered. Options available: {len(current_hpo_options or [])}")
 	if current_hpo_options:
 		auto_gen_count = len([o for o in current_hpo_options if o.get('_auto_generated', False) or o.get('label', '').startswith('🟢')])
-		logger.info(f"🟢 Auto-generated HPO options found: {auto_gen_count}")
 		
 	fixed_container_style = {
 		"height": "130px",
@@ -501,15 +495,10 @@ def update_horizontal_hpo_suggestions_enhanced(uk_ids, au_ids, internal_ids, rej
 
 	auto_generated_hpos = set()
 	if current_hpo_options:
-		logger.info(f"🔍 Checking {len(current_hpo_options)} HPO options for auto-generated markers")
 		for option in current_hpo_options:
-			logger.info(f"📋 Option: {option}") 
 			if (option.get("_auto_generated", False) or 
 				option.get("label", "").startswith("🟢")):
 				auto_generated_hpos.add(option["value"])
-				logger.info(f"✅ Found auto-generated HPO: {option['value']}")
-
-	logger.info(f"🚫 Found {len(auto_generated_hpos)} auto-generated HPO terms to exclude: {auto_generated_hpos}")
 
 	if not any([uk_ids, au_ids, internal_ids]):
 		return ([
@@ -541,8 +530,6 @@ def update_horizontal_hpo_suggestions_enhanced(uk_ids, au_ids, internal_ids, rej
 		)
 		debug_data["panel_names"] = panel_names
 		
-		logger.info(f"🏥 Processing {len(panel_names)} panel names: {panel_names}")
-		
 		if not panel_names:
 			debug_data["errors"].append("No panel names found")
 			return ([
@@ -569,8 +556,6 @@ def update_horizontal_hpo_suggestions_enhanced(uk_ids, au_ids, internal_ids, rej
 		
 		keywords = extract_keywords_from_panel_names(panel_names)
 		debug_data["keywords"] = keywords
-		
-		logger.info(f"🔑 Extracted keywords: {keywords}")
 		
 		if not keywords:
 			debug_data["errors"].append("No relevant keywords extracted")
@@ -599,8 +584,6 @@ def update_horizontal_hpo_suggestions_enhanced(uk_ids, au_ids, internal_ids, rej
 		suggested_terms = search_hpo_terms_by_keywords(keywords, max_per_keyword=4, exclude_hpo_ids=auto_generated_hpos)
 		debug_data["suggestions"] = suggested_terms
 		
-		logger.info(f"🎯 Found {len(suggested_terms)} HPO suggestions (excluding {len(auto_generated_hpos)} auto-generated)")
-
 		rejected_hpo_terms = rejected_hpo_terms or []
 		current_hpo_values = current_hpo_values or []
 
@@ -610,8 +593,6 @@ def update_horizontal_hpo_suggestions_enhanced(uk_ids, au_ids, internal_ids, rej
 				term["value"] not in current_hpo_values and
 				term["value"] not in auto_generated_hpos):  
 				filtered_suggestions.append(term)
-
-		logger.info(f"✅ {len(filtered_suggestions)} suggestions after filtering (excluded auto-generated)")
 
 		if not filtered_suggestions:
 			return ([
@@ -720,7 +701,6 @@ def update_horizontal_hpo_suggestions_enhanced(uk_ids, au_ids, internal_ids, rej
 			suggestion_cards.append(progress_indicator)
 		
 		debug_data["processing_time"] = round(time.time() - start_time, 3)
-		logger.info(f"⏱️ HPO processing completed in {debug_data['processing_time']}s")
 		
 		return (suggestion_cards, fixed_container_style, debug_data)
 		
@@ -1088,7 +1068,6 @@ def display_panel_genes_optimized(n_clicks, selected_uk_ids, selected_au_ids,
 		return "", "", "", [], [], [], "", {}
 
 	start_time = time.time()
-	print(f"Building panel with {len(selected_uk_ids or [])} UK, {len(selected_au_ids or [])} AU, {len(selected_internal_ids or [])} internal panels...")
 	
 	all_hpo_terms = selected_hpo_terms or []
 	updated_hpo_options = current_hpo_options or []
@@ -1197,8 +1176,6 @@ def display_panel_genes_optimized(n_clicks, selected_uk_ids, selected_au_ids,
 		return "No valid genes found.", "", "", [], all_hpo_terms, updated_hpo_options, "", {}
 	
 	df_unique = deduplicate_genes_fast(df_all)
-	
-	print(f"Data processing completed in {time.time() - start_time:.2f} seconds")
 	
 	# Renommer les colonnes pour l'affichage
 	df_unique = df_unique.rename(columns={
@@ -1500,8 +1477,6 @@ def display_panel_genes_optimized(n_clicks, selected_uk_ids, selected_au_ids,
 			], style={"marginTop": "10px"})
 		], style={"padding": "1rem"})
 	], className="glass-card fade-in-up", style={"marginBottom": "20px"})
-
-	print(f"Total processing time: {time.time() - start_time:.2f} seconds")
 
 	return (html.Div([
 			html.Div(summary_layout, className="mb-3"),

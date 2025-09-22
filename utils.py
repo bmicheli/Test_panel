@@ -1051,8 +1051,6 @@ def search_hpo_database_dynamic(query, max_results=50):
             data = response.json()
             
             if 'terms' in data and data['terms']:
-                print(f"🔍 API returned {len(data['terms'])} terms for '{query}'")
-                
                 for term in data['terms']:
                     hpo_id = term.get('id', '')
                     hpo_name = term.get('name', '')
@@ -1088,8 +1086,6 @@ def search_hpo_database_dynamic(query, max_results=50):
             except:
                 pass
         
-        print(f"✅ Database search found {len(results)} total results for '{query}'")
-        
     except Exception as e:
         logger.warning(f"Database HPO search failed for '{query}': {e}")
     
@@ -1100,9 +1096,6 @@ def search_hpo_terms_by_keywords(keywords, max_per_keyword=8, exclude_hpo_ids=No
         return []
     
     exclude_hpo_ids = exclude_hpo_ids or set()
-    logger.info(f"🔍 Complete HPO search for keywords: {keywords}")
-    logger.info(f"🚫 Excluding {len(exclude_hpo_ids)} auto-generated HPO terms")
-    
     suggested_hpo_terms = []
     processed_hpo_ids = set()
     
@@ -1116,7 +1109,6 @@ def search_hpo_terms_by_keywords(keywords, max_per_keyword=8, exclude_hpo_ids=No
                 
                 for hpo_id in mapped_hpo_ids:
                     if hpo_id in exclude_hpo_ids:
-                        print(f"🚫 Skipping auto-generated HPO: {hpo_id}")
                         continue
                         
                     try:
@@ -1139,7 +1131,6 @@ def search_hpo_terms_by_keywords(keywords, max_per_keyword=8, exclude_hpo_ids=No
                     hpo_id = result['value']
                     
                     if hpo_id in exclude_hpo_ids:
-                        print(f"🚫 Skipping auto-generated HPO from database: {hpo_id}")
                         continue
                     
                     if not any(r['value'] == hpo_id for r in keyword_results):
@@ -1148,7 +1139,6 @@ def search_hpo_terms_by_keywords(keywords, max_per_keyword=8, exclude_hpo_ids=No
             except Exception as e:
                 logger.warning(f"Database search failed for '{keyword}': {e}")
             
-            print(f"📊 Keyword '{keyword}': {len(keyword_results)} total results (after exclusions)")
             
             for result in keyword_results:
                 hpo_id = result['value']
@@ -1164,9 +1154,6 @@ def search_hpo_terms_by_keywords(keywords, max_per_keyword=8, exclude_hpo_ids=No
         x.get('relevance', 0),
         -len(x.get('keyword', ''))
     ), reverse=True)
-    
-    print(f"✅ TOTAL FINAL: {len(suggested_hpo_terms)} HPO suggestions (after exclusions)")
-    logger.info(f"✅ Found {len(suggested_hpo_terms)} HPO suggestions (mapping + database, after exclusions)")
     
     return suggested_hpo_terms
 

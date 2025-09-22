@@ -5,6 +5,9 @@ import logging
 # =============================================================================
 
 logging.basicConfig(level=logging.INFO)
+logging.getLogger('werkzeug').setLevel(logging.ERROR)
+logging.getLogger('flask').setLevel(logging.ERROR) 
+logging.getLogger('dash').setLevel(logging.ERROR)
 logger = logging.getLogger(__name__)
 
 # =============================================================================
