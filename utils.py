@@ -376,19 +376,37 @@ def fetch_panel_genes(base_url, panel_id):
         formatted_phenotypes = []
         for phenotype in phenotypes_list:
             if phenotype:
-                # Extraire l'OMIM ID s'il existe et créer un lien
-                omim_match = re.search(r'OMIM:(\d+)', phenotype)
-                if omim_match:
-                    omim_id = omim_match.group(1)
-                    # Remplacer l'OMIM ID par un lien
-                    phenotype_with_link = re.sub(
-                        r'OMIM:\d+', 
+                # Extraire les OMIM IDs dans différents formats
+                phenotype_formatted = phenotype
+                
+                # Format "OMIM:123456"
+                omim_matches = re.findall(r'OMIM:(\d+)', phenotype)
+                for omim_id in omim_matches:
+                    phenotype_formatted = re.sub(
+                        r'OMIM:' + omim_id, 
                         f'[OMIM:{omim_id}](https://omim.org/entry/{omim_id})', 
-                        phenotype
+                        phenotype_formatted
                     )
-                    formatted_phenotypes.append(phenotype_with_link)
-                else:
-                    formatted_phenotypes.append(phenotype)
+                
+                # Format "MIM# 123456" ou "MIM#123456"
+                mim_matches = re.findall(r'MIM#\s*(\d+)', phenotype_formatted)
+                for mim_id in mim_matches:
+                    phenotype_formatted = re.sub(
+                        r'MIM#\s*' + mim_id, 
+                        f'[OMIM:{mim_id}](https://omim.org/entry/{mim_id})', 
+                        phenotype_formatted
+                    )
+                
+                # Format "OMIM 123456" (sans deux-points)
+                omim_space_matches = re.findall(r'OMIM\s+(\d+)', phenotype_formatted)
+                for omim_id in omim_space_matches:
+                    phenotype_formatted = re.sub(
+                        r'OMIM\s+' + omim_id, 
+                        f'[OMIM:{omim_id}](https://omim.org/entry/{omim_id})', 
+                        phenotype_formatted
+                    )
+                
+                formatted_phenotypes.append(phenotype_formatted)
         
         return " | ".join(formatted_phenotypes)
     
