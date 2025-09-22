@@ -923,7 +923,7 @@ def internal_options(df):
         options.append({"label": label, "value": row["panel_id"]})
     return options
 
-def generate_panel_summary(uk_ids, au_ids, internal_ids, confs, manual_genes_list, panels_uk_df, panels_au_df, internal_panels):
+def generate_panel_summary(uk_ids, au_ids, internal_ids, confs, manual_genes_list, panels_uk_df, panels_au_df, internal_panels, hpo_terms=None):
     summary_parts = []
     
     def get_confidence_notation(conf_list):
@@ -978,7 +978,18 @@ def generate_panel_summary(uk_ids, au_ids, internal_ids, confs, manual_genes_lis
     if manual_genes_list:
         summary_parts.extend(manual_genes_list)
     
-    return ",".join(summary_parts)
+    # Construire le summary de base
+    base_summary = ",".join(summary_parts)
+    
+    # Ajouter les HPO terms si présents
+    if hpo_terms and len(hpo_terms) > 0:
+        # Filtrer pour ne garder que les HPO IDs valides
+        valid_hpo_terms = [term for term in hpo_terms if term and term.startswith('HP:')]
+        if valid_hpo_terms:
+            hpo_summary = ",".join(valid_hpo_terms)
+            return f"{base_summary}\n{hpo_summary}"
+    
+    return base_summary
 
 def extract_medical_keywords_enhanced(panel_names):
     if not panel_names:

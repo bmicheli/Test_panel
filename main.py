@@ -1529,9 +1529,9 @@ def check_gene_in_panel(n_clicks, n_submit, gene_name, gene_list):
 		return "", ""
 	
 	if gene_name.upper() in [g.upper() for g in gene_list]:
-		return f"Gene '{gene_name}' is present in the custom panel.", ""
+		return f"✅ Gene '{gene_name}' is present in the custom panel.", ""
 	else:
-		return f"Gene '{gene_name}' is NOT present in the custom panel.", ""
+		return f"🚫 Gene '{gene_name}' is NOT present in the custom panel.", ""
 
 @app.callback(
 	Output("table-per-confidence", "children"),
@@ -1554,34 +1554,36 @@ def update_table_by_confidence(btn_clicks, data):
 	return data.get(level, "")
 
 @app.callback(
-	Output("panel-summary-output", "value", allow_duplicate=True),
-	Input("generate-code-btn", "n_clicks"),
-	State("dropdown-uk", "value"),
-	State("dropdown-au", "value"),
-	State("dropdown-internal", "value"),
-	State("confidence-filter", "value"),
-	State("manual-genes", "value"),
-	State("hpo-search-dropdown", "value"),
-	prevent_initial_call=True
+    Output("panel-summary-output", "value", allow_duplicate=True),
+    Input("generate-code-btn", "n_clicks"),
+    State("dropdown-uk", "value"),
+    State("dropdown-au", "value"), 
+    State("dropdown-internal", "value"),
+    State("confidence-filter", "value"),
+    State("manual-genes", "value"),
+    State("hpo-search-dropdown", "value"),  # AJOUT: État des HPO terms
+    prevent_initial_call=True
 )
 def create_panel_summary_callback(n_clicks, uk_ids, au_ids, internal_ids, confs, manual, hpo_terms):
-	if not n_clicks:
-		raise dash.exceptions.PreventUpdate
-		
-	manual_list = [g.strip() for g in manual.strip().splitlines() if g.strip()] if manual else []
-	
-	summary = generate_panel_summary(
-		uk_ids or [], 
-		au_ids or [], 
-		internal_ids or [], 
-		confs or [], 
-		manual_list, 
-		panels_uk_df, 
-		panels_au_df, 
-		internal_panels
-	)
-	
-	return summary
+    if not n_clicks:
+        raise dash.exceptions.PreventUpdate
+        
+    manual_list = [g.strip() for g in manual.strip().splitlines() if g.strip()] if manual else []
+    
+    # MODIFICATION: Passer les HPO terms à la fonction
+    summary = generate_panel_summary(
+        uk_ids or [], 
+        au_ids or [], 
+        internal_ids or [], 
+        confs or [], 
+        manual_list, 
+        panels_uk_df, 
+        panels_au_df, 
+        internal_panels,
+        hpo_terms or []  # AJOUT: Inclure les HPO terms
+    )
+    
+    return summary
 
 @app.callback(
 	Output("download-genes", "data"),
