@@ -4,6 +4,7 @@ from dash import html, dcc, Output, Input, State, callback_context, ALL, dash_ta
 import pandas as pd
 import json
 import time
+import re
 from datetime import datetime
 import threading
 import schedule
@@ -322,65 +323,65 @@ def toggle_sidebar(n_clicks, is_open):
 	prevent_initial_call=True
 )
 def apply_preset(n_clicks_list, current_hpo_options):
-    ctx = callback_context
-    if not ctx.triggered or all(n == 0 for n in n_clicks_list):
-        raise dash.exceptions.PreventUpdate
+	ctx = callback_context
+	if not ctx.triggered or all(n == 0 for n in n_clicks_list):
+		raise dash.exceptions.PreventUpdate
 
-    prop_id = ctx.triggered[0]["prop_id"]
-    preset_key = json.loads(prop_id.split(".")[0])["index"]
-    preset = PANEL_PRESETS[preset_key]
+	prop_id = ctx.triggered[0]["prop_id"]
+	preset_key = json.loads(prop_id.split(".")[0])["index"]
+	preset = PANEL_PRESETS[preset_key]
 
-    # --- Étape 1 : reset complet (comme bouton Reset)
-    uk_panels = None
-    au_panels = None
-    internal_panels = None
-    conf_levels = [3, 2]
-    manual_genes_text = ""
-    hpo_terms = []
-    updated_hpo_options = []
+	# --- Étape 1 : reset complet (comme bouton Reset)
+	uk_panels = None
+	au_panels = None
+	internal_panels = None
+	conf_levels = [3, 2]
+	manual_genes_text = ""
+	hpo_terms = []
+	updated_hpo_options = []
 
-    reset_gene_table = ""
-    reset_venn = ""
-    reset_hpo_table = ""
-    reset_gene_list = []
-    reset_panel_summary = ""
-    reset_rejected_hpo = []
-    reset_suggestion_counter = 0
-    reset_code_section_style = {"display": "none"}
-    reset_venn_row_style = {"display": "none"}
-    reset_gene_data = {}
+	reset_gene_table = ""
+	reset_venn = ""
+	reset_hpo_table = ""
+	reset_gene_list = []
+	reset_panel_summary = ""
+	reset_rejected_hpo = []
+	reset_suggestion_counter = 0
+	reset_code_section_style = {"display": "none"}
+	reset_venn_row_style = {"display": "none"}
+	reset_gene_data = {}
 
-    # --- Étape 2 : appliquer le preset par-dessus
-    if "uk_panels" in preset:
-        uk_panels = preset["uk_panels"]
-    if "au_panels" in preset:
-        au_panels = preset["au_panels"]
-    if "internal" in preset:
-        internal_panels = preset["internal"]
-    if "conf" in preset:
-        conf_levels = preset["conf"]
-    if "manual" in preset:
-        manual_genes_text = "\n".join(preset["manual"]) if preset["manual"] else ""
-    if "hpo_terms" in preset:
-        hpo_terms = preset["hpo_terms"]
+	# --- Étape 2 : appliquer le preset par-dessus
+	if "uk_panels" in preset:
+		uk_panels = preset["uk_panels"]
+	if "au_panels" in preset:
+		au_panels = preset["au_panels"]
+	if "internal" in preset:
+		internal_panels = preset["internal"]
+	if "conf" in preset:
+		conf_levels = preset["conf"]
+	if "manual" in preset:
+		manual_genes_text = "\n".join(preset["manual"]) if preset["manual"] else ""
+	if "hpo_terms" in preset:
+		hpo_terms = preset["hpo_terms"]
 
-    # Met à jour les options HPO si besoin
-    existing_option_values = [opt["value"] for opt in updated_hpo_options]
-    new_hpo_terms = [term for term in hpo_terms if term not in existing_option_values]
-    if new_hpo_terms:
-        hpo_details_list = fetch_hpo_terms_parallel(new_hpo_terms)
-        for hpo_details in hpo_details_list:
-            option = {
-                "label": f"{hpo_details['name']} ({hpo_details['id']})",
-                "value": hpo_details['id']
-            }
-            updated_hpo_options.append(option)
+	# Met à jour les options HPO si besoin
+	existing_option_values = [opt["value"] for opt in updated_hpo_options]
+	new_hpo_terms = [term for term in hpo_terms if term not in existing_option_values]
+	if new_hpo_terms:
+		hpo_details_list = fetch_hpo_terms_parallel(new_hpo_terms)
+		for hpo_details in hpo_details_list:
+			option = {
+				"label": f"{hpo_details['name']} ({hpo_details['id']})",
+				"value": hpo_details['id']
+			}
+			updated_hpo_options.append(option)
 
-    return (uk_panels, au_panels, internal_panels, conf_levels, manual_genes_text,
-            hpo_terms, updated_hpo_options, False,
-            reset_gene_table, reset_venn, reset_hpo_table, reset_gene_list,
-            reset_panel_summary, reset_rejected_hpo, reset_suggestion_counter,
-            reset_code_section_style, reset_venn_row_style, reset_gene_data)
+	return (uk_panels, au_panels, internal_panels, conf_levels, manual_genes_text,
+			hpo_terms, updated_hpo_options, False,
+			reset_gene_table, reset_venn, reset_hpo_table, reset_gene_list,
+			reset_panel_summary, reset_rejected_hpo, reset_suggestion_counter,
+			reset_code_section_style, reset_venn_row_style, reset_gene_data)
 		
 @app.callback(
 	Output("hpo-search-dropdown", "value", allow_duplicate=True),
@@ -1114,10 +1115,14 @@ def display_panel_genes_optimized(n_clicks, selected_uk_ids, selected_au_ids,
 			
 			df_filtered = df[df["confidence_level"].isin(selected_confidences)].copy()
 			
-			required_cols = ["gene_symbol", "confidence_level", "omim_id", "hgnc_id", "entity_type", "biotype", "mode_of_inheritance"]
+			# Nouvelles colonnes requises
+			required_cols = ["gene_symbol", "gene_name", "confidence_level", "omim_id", "hgnc_id", "mode_of_inheritance", "phenotypes"]
 			for col in required_cols:
 				if col not in df_filtered.columns:
-					df_filtered[col] = "" if col != "confidence_level" else 0
+					if col == "confidence_level":
+						df_filtered[col] = 0
+					else:
+						df_filtered[col] = ""
 			
 			genes_combined.append(df_filtered[required_cols])
 			gene_sets[result_key] = set(df_filtered["gene_symbol"])
@@ -1140,16 +1145,17 @@ def display_panel_genes_optimized(n_clicks, selected_uk_ids, selected_au_ids,
 				
 				panel_df = clean_confidence_level_fast(panel_df)
 				
+				# Remplir les nouvelles colonnes pour les panels internes
+				panel_df["gene_name"] = ""  # Pas de gene_name pour les panels internes
 				panel_df["omim_id"] = ""
 				panel_df["hgnc_id"] = ""
-				panel_df["entity_type"] = "gene"
-				panel_df["biotype"] = "unknown"
-				panel_df["mode_of_inheritance"] = "unknown"
+				panel_df["mode_of_inheritance"] = ""
+				panel_df["phenotypes"] = ""
 				
 				panel_dataframes[f"INT-{pid}"] = panel_df.copy()
 				
 				panel_df_filtered = panel_df[panel_df["confidence_level"].isin(selected_confidences)].copy()
-				required_cols = ["gene_symbol", "confidence_level", "omim_id", "hgnc_id", "entity_type", "biotype", "mode_of_inheritance"]
+				required_cols = ["gene_symbol", "gene_name", "confidence_level", "omim_id", "hgnc_id", "mode_of_inheritance", "phenotypes"]
 				genes_combined.append(panel_df_filtered[required_cols])
 				gene_sets[f"INT-{pid}"] = set(panel_df_filtered["gene_symbol"])
 				
@@ -1167,12 +1173,12 @@ def display_panel_genes_optimized(n_clicks, selected_uk_ids, selected_au_ids,
 		if manual_genes_list:  
 			manual_df = pd.DataFrame({
 				"gene_symbol": manual_genes_list, 
+				"gene_name": [""] * len(manual_genes_list),
 				"confidence_level": [0] * len(manual_genes_list),
 				"omim_id": [""] * len(manual_genes_list),
 				"hgnc_id": [""] * len(manual_genes_list),
-				"entity_type": ["gene"] * len(manual_genes_list),
-				"biotype": ["manual"] * len(manual_genes_list),
-				"mode_of_inheritance": ["manual"] * len(manual_genes_list)
+				"mode_of_inheritance": ["manual"] * len(manual_genes_list),
+				"phenotypes": [""] * len(manual_genes_list)
 			})
 			genes_combined.append(manual_df)
 			gene_sets["Manual"] = set(manual_genes_list)
@@ -1195,14 +1201,15 @@ def display_panel_genes_optimized(n_clicks, selected_uk_ids, selected_au_ids,
 	
 	print(f"Data processing completed in {time.time() - start_time:.2f} seconds")
 	
+	# Renommer les colonnes pour l'affichage
 	df_unique = df_unique.rename(columns={
 		"gene_symbol": "Gene Symbol",
+		"gene_name": "Gene Name",
 		"confidence_level": "Confidence",
-		"omim_id": "OMIM ID",
-		"hgnc_id": "HGNC ID", 
-		"entity_type": "Type",
-		"biotype": "Biotype",
-		"mode_of_inheritance": "Mode of Inheritance"
+		"omim_id": "OMIM",
+		"hgnc_id": "HGNC", 
+		"mode_of_inheritance": "Mode of Inheritance",
+		"phenotypes": "Phenotypes"
 	})
 
 	total_genes = pd.DataFrame({"Number of genes in panel": [df_unique.shape[0]]})
@@ -1357,7 +1364,7 @@ def display_panel_genes_optimized(n_clicks, selected_uk_ids, selected_au_ids,
 			button_color = "secondary"
 			
 		button = dbc.Button(
-			f"Gene list (confidence {level})", 
+			f"Gene list details", 
 			id={"type": "btn-confidence", "level": str(level)}, 
 			color=button_color, 
 			className="me-1 mb-1", 
@@ -1377,16 +1384,29 @@ def display_panel_genes_optimized(n_clicks, selected_uk_ids, selected_au_ids,
 		)
 		buttons.append(manual_button)
 
+	# Nouvelles colonnes pour le tableau
 	table_columns = [
 		{"name": "Gene Symbol", "id": "Gene Symbol", "type": "text"},
-		{"name": "OMIM ID", "id": "OMIM ID", "type": "text", "presentation": "markdown"},
-		{"name": "HGNC ID", "id": "HGNC ID", "type": "text", "presentation": "markdown"},
-		{"name": "Type", "id": "Type", "type": "text"},
-		{"name": "Biotype", "id": "Biotype", "type": "text"},
+		{"name": "Gene Name", "id": "Gene Name", "type": "text"},
+		{"name": "OMIM", "id": "OMIM", "type": "text", "presentation": "markdown"},
+		{"name": "HGNC", "id": "HGNC", "type": "text", "presentation": "markdown"},
 		{"name": "Mode of Inheritance", "id": "Mode of Inheritance", "type": "text"},
+		{"name": "Phenotypes", "id": "Phenotypes", "type": "text", "presentation": "markdown"},
 		{"name": "Confidence", "id": "Confidence", "type": "numeric"}
 	]
 
+	# Mise à jour des largeurs de colonnes
+	style_cell_conditional=[
+		{"if": {"column_id": "Gene Symbol"}, "width": "100px", "minWidth": "100px"},
+		{"if": {"column_id": "Gene Name"}, "width": "200px", "minWidth": "200px"},
+		{"if": {"column_id": "OMIM"}, "width": "120px", "minWidth": "120px"},
+		{"if": {"column_id": "HGNC"}, "width": "100px", "minWidth": "100px"},
+		{"if": {"column_id": "Mode of Inheritance"}, "width": "120px", "minWidth": "120px"},
+		{"if": {"column_id": "Phenotypes"}, "width": "300px", "minWidth": "300px"},
+		{"if": {"column_id": "Confidence"}, "width": "80px", "minWidth": "80px"},
+	]
+
+	# Mise à jour des tableaux par niveau de confiance
 	tables_by_level = {
 		str(level): dash_table.DataTable(
 			columns=table_columns,
@@ -1412,31 +1432,24 @@ def display_panel_genes_optimized(n_clicks, selected_uk_ids, selected_au_ids,
 				{"if": {"filter_query": "{Confidence} = 1", "column_id": "Confidence"}, "backgroundColor": "#f8d7da"},
 				{"if": {"filter_query": "{Confidence} = 0", "column_id": "Confidence"}, "backgroundColor": "#d1ecf1"},
 			],
-			style_cell_conditional=[
-				{"if": {"column_id": "Gene Symbol"}, "width": "100px", "minWidth": "100px"},
-				{"if": {"column_id": "OMIM ID"}, "width": "150px", "minWidth": "150px"},
-				{"if": {"column_id": "HGNC ID"}, "width": "110px", "minWidth": "110px"},
-				{"if": {"column_id": "Type"}, "width": "70px", "minWidth": "70px"},
-				{"if": {"column_id": "Biotype"}, "width": "110px", "minWidth": "110px"},
-				{"if": {"column_id": "Mode of Inheritance"}, "width": "180px", "minWidth": "180px"},
-				{"if": {"column_id": "Confidence"}, "width": "80px", "minWidth": "80px"},
-			],
+			style_cell_conditional=style_cell_conditional,
 			page_action="none",
 			markdown_options={"link_target": "_blank"}
 		)
 		for level in confidence_levels_present
 	}
 
+	# Mise à jour du tableau manuel si présent
 	if manual_genes_list:
 		manual_table_data = []
 		for gene in manual_genes_list:
 			manual_table_data.append({
 				"Gene Symbol": gene,
-				"OMIM ID": "",
-				"HGNC ID": "",
-				"Type": "manual",
-				"Biotype": "manual",
+				"Gene Name": "",
+				"OMIM": "",
+				"HGNC": "",
 				"Mode of Inheritance": "manual",
+				"Phenotypes": "",
 				"Confidence": 0
 			})
 		
@@ -1461,15 +1474,7 @@ def display_panel_genes_optimized(n_clicks, selected_uk_ids, selected_au_ids,
 			style_data_conditional=[
 				{"if": {"filter_query": "{Confidence} = 0", "column_id": "Confidence"}, "backgroundColor": "#d1ecf1"}
 			],
-			style_cell_conditional=[
-				{"if": {"column_id": "Gene Symbol"}, "width": "100px", "minWidth": "100px"},
-				{"if": {"column_id": "OMIM ID"}, "width": "150px", "minWidth": "150px"},
-				{"if": {"column_id": "HGNC ID"}, "width": "110px", "minWidth": "110px"},
-				{"if": {"column_id": "Type"}, "width": "70px", "minWidth": "70px"},
-				{"if": {"column_id": "Biotype"}, "width": "110px", "minWidth": "110px"},
-				{"if": {"column_id": "Mode of Inheritance"}, "width": "180px", "minWidth": "180px"},
-				{"if": {"column_id": "Confidence"}, "width": "80px", "minWidth": "80px"},
-			],
+			style_cell_conditional=style_cell_conditional,
 			page_action="none",
 			markdown_options={"link_target": "_blank"}
 		)

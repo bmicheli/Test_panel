@@ -329,7 +329,7 @@ def fetch_panel_genes(base_url, panel_id):
         links = []
         for omim_id in omim_list:
             if omim_id:
-                links.append(f'[{omim_id}](https://omim.org/entry/{omim_id})')
+                links.append(f'[OMIM:{omim_id}](https://omim.org/entry/{omim_id})')
         
         return " | ".join(links) if links else ""
     
@@ -339,14 +339,67 @@ def fetch_panel_genes(base_url, panel_id):
         
         return f'[{hgnc_id}](https://www.genenames.org/data/gene-symbol-report/#!/hgnc_id/{hgnc_id})'
     
+    def format_mode_of_inheritance(mode_str):
+        """Convert mode of inheritance to standardized format"""
+        if not mode_str:
+            return ""
+        
+        mode_upper = mode_str.upper()
+        
+        # Mapping des modes d'hérédité
+        if "MONOALLELIC" in mode_upper and "BIALLELIC" in mode_upper:
+            return "AD/AR"
+        elif "MONOALLELIC" in mode_upper:
+            return "AD"
+        elif "BIALLELIC" in mode_upper:
+            return "AR"
+        elif "X-LINKED" in mode_upper:
+            if "DOMINANT" in mode_upper:
+                return "XLD"
+            else:
+                return "XLR"
+        elif "MITOCHONDRIAL" in mode_upper:
+            return "Mt"
+        elif "IMPRINTING" in mode_upper:
+            return "Imprinting"
+        elif "DIGENIC" in mode_upper:
+            return "Digenic"
+        else:
+            # Retourner le texte original s'il ne correspond à aucun pattern
+            return mode_str
+    
+    def format_phenotypes(phenotypes_list):
+        """Format phenotypes list into readable string"""
+        if not phenotypes_list:
+            return ""
+        
+        formatted_phenotypes = []
+        for phenotype in phenotypes_list:
+            if phenotype:
+                # Extraire l'OMIM ID s'il existe et créer un lien
+                omim_match = re.search(r'OMIM:(\d+)', phenotype)
+                if omim_match:
+                    omim_id = omim_match.group(1)
+                    # Remplacer l'OMIM ID par un lien
+                    phenotype_with_link = re.sub(
+                        r'OMIM:\d+', 
+                        f'[OMIM:{omim_id}](https://omim.org/entry/{omim_id})', 
+                        phenotype
+                    )
+                    formatted_phenotypes.append(phenotype_with_link)
+                else:
+                    formatted_phenotypes.append(phenotype)
+        
+        return " | ".join(formatted_phenotypes)
+    
     df_genes = pd.DataFrame([
         {
-            "gene_symbol": g["gene_data"].get("gene_symbol", ""),
+            "gene_symbol": g["gene_data"].get("hgnc_symbol", g["gene_data"].get("gene_symbol", "")),
+            "gene_name": g["gene_data"].get("gene_name", ""),
             "omim_id": format_omim_links(g["gene_data"].get("omim_gene", [])),
             "hgnc_id": format_hgnc_link(g["gene_data"].get("hgnc_id", "")),
-            "entity_type": g.get("entity_type", ""),
-            "biotype": g["gene_data"].get("biotype", ""),
-            "mode_of_inheritance": g.get("mode_of_inheritance", ""),
+            "mode_of_inheritance": format_mode_of_inheritance(g.get("mode_of_inheritance", "")),
+            "phenotypes": format_phenotypes(g.get("phenotypes", [])),
             "confidence_level": g.get("confidence_level"),
             "penetrance": g.get("penetrance"),
             "source": g.get("source"),
@@ -1014,9 +1067,6 @@ def search_hpo_database_dynamic(query, max_results=50):
     return results[:max_results] 
 
 def search_hpo_terms_by_keywords(keywords, max_per_keyword=8, exclude_hpo_ids=None):
-    print(f"🚀 FUNCTION CALLED - search_hpo_terms_by_keywords with keywords: {keywords}")
-    print(f"🚫 Excluding HPO IDs: {exclude_hpo_ids}")
-    
     if not keywords:
         return []
     
