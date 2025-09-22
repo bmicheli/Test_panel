@@ -781,7 +781,7 @@ def create_upset_plot(gene_sets, panel_names):
         figure_width = 10
     
     fig, (ax_bars, ax_matrix) = plt.subplots(2, 1, figsize=(figure_width, figure_height), dpi=dpi,
-                                        gridspec_kw={'height_ratios': [1, 1]})
+                                        gridspec_kw={'height_ratios': [1, 1]},facecolor='none')
     
     if num_intersections <= 6:
         bar_width = 0.8
@@ -815,19 +815,22 @@ def create_upset_plot(gene_sets, panel_names):
     bars = ax_bars.bar(x_pos, intersection_sizes, color=bar_colors, alpha=0.8, width=bar_width,
                     edgecolor='white', linewidth=1)
     
-    ax_bars.set_ylabel('Number of Genes', fontsize=label_fontsize, fontweight='bold')
-    ax_bars.set_title('Gene Panel Intersections', fontsize=title_fontsize, fontweight='bold', pad=20)
-    ax_bars.set_xticks([])
+    ax_bars.set_ylabel('Number of Genes', fontsize=label_fontsize, fontweight='bold', color='#2c3e50')
+    ax_bars.set_title('Gene Panel Intersections', fontsize=title_fontsize, fontweight='bold', 
+                     pad=20, color='#2c3e50')
+    ax_bars.tick_params(colors='#2c3e50')
     ax_bars.grid(True, alpha=0.3, axis='y')
     ax_bars.spines['top'].set_visible(False)
     ax_bars.spines['right'].set_visible(False)
+    ax_bars.spines['left'].set_color('#2c3e50')
+    ax_bars.spines['bottom'].set_color('#2c3e50')
     ax_bars.set_xlim(-0.5, len(sorted_intersections) - 0.5)
     
     max_height = max(intersection_sizes) if intersection_sizes else 1
     for i, (bar, size) in enumerate(zip(bars, intersection_sizes)):
         ax_bars.text(i, bar.get_height() + max_height * 0.01, 
                     str(size), ha='center', va='bottom', fontweight='bold', 
-                    fontsize=value_fontsize)
+                    fontsize=value_fontsize, color='#2c3e50')
     
     matrix_data = np.zeros((len(sets_list), len(sorted_intersections)))
     for j, (membership, _) in enumerate(sorted_intersections):
@@ -884,7 +887,8 @@ def create_upset_plot(gene_sets, panel_names):
             display_names.append(f"{name} ({set_size})")
     
     ax_matrix.set_yticks(range(len(sets_list)))
-    ax_matrix.set_yticklabels(display_names, fontsize=ytick_fontsize)
+    ax_matrix.set_yticklabels(display_names, fontsize=ytick_fontsize, color='#2c3e50')
+    ax_matrix.tick_params(colors='#2c3e50')
     ax_matrix.set_xticks([])
     ax_matrix.set_xlabel('')
     
@@ -900,9 +904,11 @@ def create_upset_plot(gene_sets, panel_names):
         pad = 1.2
     
     plt.tight_layout(pad=pad)
-    ax_matrix.set_facecolor('white')
-    ax_bars.set_facecolor('white')
-    fig.patch.set_facecolor('white')
+    
+    # MODIFICATION : Fonds transparents pour les axes
+    ax_matrix.set_facecolor('none')
+    ax_bars.set_facecolor('none')
+    fig.patch.set_facecolor('none')
     
     return fig
 

@@ -1225,16 +1225,32 @@ def display_panel_genes_optimized(n_clicks, selected_uk_ids, selected_au_ids,
 				labels.append(panel_key)
 		
 		sets = [s[1] for s in set_items]
-		fig, ax = plt.subplots(figsize=(9, 5))
+		# MODIFICATION : Créer figure avec fond transparent
+		fig, ax = plt.subplots(figsize=(9, 5), facecolor='none')
+		ax.set_facecolor('none')
+		
 		try:
 			if len(sets) == 2:
-				venn2(sets, set_labels=labels)
+				venn_diagram = venn2(sets, set_labels=labels)
 			elif len(sets) == 3:
-				venn3(sets, set_labels=labels)
+				venn_diagram = venn3(sets, set_labels=labels)
+			
+			# MODIFICATION : Personnaliser les couleurs du texte
+			for text in venn_diagram.set_labels:
+				if text:
+					text.set_color('#2c3e50')
+					text.set_fontweight('bold')
+			
+			for text in venn_diagram.subset_labels:
+				if text:
+					text.set_color('#2c3e50')
+					text.set_fontweight('bold')
 			
 			buf = io.BytesIO()
 			plt.tight_layout()
-			plt.savefig(buf, format="png", bbox_inches='tight', dpi=100)
+			# MODIFICATION : Sauvegarder avec fond transparent
+			plt.savefig(buf, format="png", bbox_inches='tight', dpi=100,
+					facecolor='none', edgecolor='none', transparent=True)
 			plt.close(fig)
 			data = base64.b64encode(buf.getbuffer()).decode("ascii")
 			
@@ -1250,7 +1266,8 @@ def display_panel_genes_optimized(n_clicks, selected_uk_ids, selected_au_ids,
 				"height": "580px",  
 				"display": "flex",
 				"alignItems": "center",
-				"justifyContent": "center"
+				"justifyContent": "center",
+				"backgroundColor": "transparent" 
 			})
 		except Exception as e:
 			venn_component = html.Div(f"Could not generate Venn diagram: {str(e)}", style={

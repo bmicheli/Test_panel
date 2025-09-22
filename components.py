@@ -398,7 +398,9 @@ def generate_panel_pie_chart(panel_df, panel_name, version=None):
 	labels = [f"{count} genes" for level, count in 
 			zip(conf_counts['confidence_level'], conf_counts['count'])]
 
-	fig, ax = plt.subplots(figsize=(9, 5))  
+	fig, ax = plt.subplots(figsize=(9, 5), facecolor='none')
+	ax.set_facecolor('none') 
+
 	ax.pie(conf_counts['count'], labels=labels, colors=colors, autopct='%1.1f%%', 
 		startangle=90, wedgeprops={'linewidth': 1, 'edgecolor': 'white'})
 	ax.axis('equal') 
@@ -406,11 +408,13 @@ def generate_panel_pie_chart(panel_df, panel_name, version=None):
 	title = f"Gene Distribution - {panel_name}"
 	if version:
 		title += f" (v{version})"
+
+	ax.set_title(title, fontsize=16, fontweight='bold', color='#2c3e50', pad=20)
 	
-	# Convert plot to base64 image
 	buf = io.BytesIO()
 	plt.tight_layout()
-	plt.savefig(buf, format="png", bbox_inches='tight', dpi=100)
+	plt.savefig(buf, format="png", bbox_inches='tight', dpi=100, 
+				facecolor='none', edgecolor='none', transparent=True)
 	plt.close(fig)
 	data = base64.b64encode(buf.getbuffer()).decode("ascii")
 	
@@ -427,7 +431,8 @@ def generate_panel_pie_chart(panel_df, panel_name, version=None):
 		"height": "580px",  
 		"display": "flex",
 		"flexDirection": "column",
-		"justifyContent": "center"
+		"justifyContent": "center",
+		"backgroundColor": "transparent"
 	})
 
 def create_hpo_terms_table(hpo_details):
