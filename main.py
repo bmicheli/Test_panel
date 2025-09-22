@@ -1143,8 +1143,7 @@ def display_panel_genes_optimized(n_clicks, selected_uk_ids, selected_au_ids,
 			try:
 				panel_df = internal_df[internal_df["panel_id"] == pid].copy()
 				
-				panel_df = clean_confidence_level_fast(panel_df)
-				
+				panel_df["confidence_level"] = 3
 				# Remplir les nouvelles colonnes pour les panels internes
 				panel_df["gene_name"] = ""  # Pas de gene_name pour les panels internes
 				panel_df["omim_id"] = ""
@@ -1174,10 +1173,10 @@ def display_panel_genes_optimized(n_clicks, selected_uk_ids, selected_au_ids,
 			manual_df = pd.DataFrame({
 				"gene_symbol": manual_genes_list, 
 				"gene_name": [""] * len(manual_genes_list),
-				"confidence_level": [0] * len(manual_genes_list),
+				"confidence_level": [3] * len(manual_genes_list),
 				"omim_id": [""] * len(manual_genes_list),
 				"hgnc_id": [""] * len(manual_genes_list),
-				"mode_of_inheritance": ["manual"] * len(manual_genes_list),
+				"mode_of_inheritance": [""] * len(manual_genes_list),
 				"phenotypes": [""] * len(manual_genes_list)
 			})
 			genes_combined.append(manual_df)
@@ -1448,7 +1447,7 @@ def display_panel_genes_optimized(n_clicks, selected_uk_ids, selected_au_ids,
 				"Gene Name": "",
 				"OMIM": "",
 				"HGNC": "",
-				"Mode of Inheritance": "manual",
+				"Mode of Inheritance": "",
 				"Phenotypes": "",
 				"Confidence": 0
 			})
