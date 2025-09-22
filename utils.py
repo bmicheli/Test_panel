@@ -816,8 +816,8 @@ def create_upset_plot(gene_sets, panel_names):
                     edgecolor='white', linewidth=1)
     
     ax_bars.set_ylabel('Number of Genes', fontsize=label_fontsize, fontweight='bold', color='#2c3e50')
-    ax_bars.set_title('Gene Panel Intersections', fontsize=title_fontsize, fontweight='bold', 
-                     pad=20, color='#2c3e50')
+#    ax_bars.set_title('Gene Panel Intersections', fontsize=title_fontsize, fontweight='bold', 
+#                     pad=20, color='#2c3e50')
     ax_bars.tick_params(colors='#2c3e50')
     ax_bars.grid(True, alpha=0.3, axis='y')
     ax_bars.spines['top'].set_visible(False)

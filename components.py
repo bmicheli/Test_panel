@@ -419,7 +419,7 @@ def generate_panel_pie_chart(panel_df, panel_name, version=None):
 	data = base64.b64encode(buf.getbuffer()).decode("ascii")
 	
 	return html.Div([
-		html.H4(title, className="text-center mb-3", style={"fontSize": "16px"}),
+#		html.H4(title, className="text-center mb-3", style={"fontSize": "16px"}),
 		html.Img(src=f"data:image/png;base64,{data}", 
 				style={"maxWidth": "100%", "height": "auto", "display": "block", "margin": "auto"})
 	], style={
