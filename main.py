@@ -529,8 +529,8 @@ def update_horizontal_hpo_suggestions_enhanced(uk_ids, au_ids, internal_ids, rej
 			})
 		], {
 			**fixed_container_style,
-			"border": "2px dashed rgba(0, 188, 212, 0.3)",
-			"backgroundColor": "rgba(248, 249, 250, 0.5)",
+			"border": "none",
+			"backgroundColor": "transparent",
 			"justifyContent": "center"
 		}, debug_data)
 	
@@ -562,8 +562,8 @@ def update_horizontal_hpo_suggestions_enhanced(uk_ids, au_ids, internal_ids, rej
 				})
 			], {
 				**fixed_container_style,
-				"border": "2px dashed rgba(255, 193, 7, 0.3)",
-				"backgroundColor": "rgba(255, 248, 225, 0.5)",
+				"border": "none",
+				"backgroundColor": "transparent",
 				"justifyContent": "center"
 			}, debug_data)
 		
@@ -591,8 +591,8 @@ def update_horizontal_hpo_suggestions_enhanced(uk_ids, au_ids, internal_ids, rej
 				})
 			], {
 				**fixed_container_style,
-				"border": "2px dashed rgba(0, 188, 212, 0.3)",
-				"backgroundColor": "rgba(248, 249, 250, 0.5)",
+				"border": "none",
+				"backgroundColor": "transparent",
 				"justifyContent": "center"
 			}, debug_data)
 		
@@ -643,8 +643,8 @@ def update_horizontal_hpo_suggestions_enhanced(uk_ids, au_ids, internal_ids, rej
 				})
 			], {
 				**fixed_container_style,
-				"border": "2px solid rgba(40, 167, 69, 0.3)",
-				"backgroundColor": "rgba(212, 237, 218, 0.5)",
+				"border": "none",
+				"backgroundColor": "transparent",
 				"justifyContent": "center"
 			}, debug_data)
 		

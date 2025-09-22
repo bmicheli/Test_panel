@@ -169,14 +169,15 @@ def create_options_card():
 						style={"fontSize": "11px", "fontStyle": "italic", "padding": "10px"})
 					], style={
 						"height": "130px",
-						"border": "2px dashed rgba(0, 188, 212, 0.3)",
+						"border": "none",
 						"borderRadius": "10px",
 						"padding": "10px",
-						"backgroundColor": "rgba(248, 249, 250, 0.5)",
+						"backgroundColor": "transparent",
 						"display": "flex",
 						"flexDirection": "row",
+						"alignItems": "center",
+						"justifyContent": "center",
 						"gap": "8px",
-						"alignItems": "stretch"
 					})
 				], width=4),
 				dbc.Col([
