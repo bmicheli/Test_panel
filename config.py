@@ -21,7 +21,7 @@ PANELAPP_AU_BASE = "https://panelapp-aus.org/api/v1/"
 PANEL_PRESETS = {
 	"neurodevelopmental": {
         "name": "Neurodevelopmental Disorders",
-        "icon": "mdi:head-cog",
+        "icon": "",
         "uk_panels": [285],
         "au_panels": [250],
         "internal": [8801],

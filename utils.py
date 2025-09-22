@@ -217,7 +217,7 @@ MEDICAL_TO_HPO_MAPPING = {
     "alopecia": ["HP:0001596", "HP:0002205", "HP:0001595", "HP:0002212"],
     "hyperpigmentation": ["HP:0000953", "HP:0001000", "HP:0001010", "HP:0011121"],
     "hypopigmentation": ["HP:0001010", "HP:0001000", "HP:0000953", "HP:0011121"],
-    "cafe au lait spots": ["HP:0000957", "HP:0000953", "HP:0001010", "HP:0011121"],
+    "cafe au lait": ["HP:0000957", "HP:0000953", "HP:0001010", "HP:0011121"],
     "palmoplantar keratoderma": ["HP:0000982", "HP:0000952", "HP:0000988", "HP:0011121"],
     "nail dystrophy": ["HP:0008398", "HP:0001597", "HP:0001816", "HP:0001808"],
     "photosensitivity": ["HP:0000992", "HP:0011121", "HP:0000952", "HP:0000988"],

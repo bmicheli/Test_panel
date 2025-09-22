@@ -234,7 +234,7 @@ app.layout = dbc.Container([
 	# Gene table section (keep original functionality)
 	html.Div(id="gene-table-output"),
 	
-	# Export section - NOW WRAPPED IN GLASS CARD (PANEL SUMMARY ONLY)
+	# Export section - (PANEL SUMMARY ONLY)
 	html.Div(
 		id="generate-code-section",
 		style={"display": "none", "width": "100%"},
