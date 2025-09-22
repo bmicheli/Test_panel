@@ -409,7 +409,7 @@ def generate_panel_pie_chart(panel_df, panel_name, version=None):
 	if version:
 		title += f" (v{version})"
 
-	ax.set_title(title, fontsize=16, fontweight='bold', color='#2c3e50', pad=20)
+#	ax.set_title(title, fontsize=16, fontweight='bold', color='#2c3e50', pad=20)
 	
 	buf = io.BytesIO()
 	plt.tight_layout()
