@@ -31,9 +31,9 @@ def create_header():
 		),
 		html.Div([
 			html.H1([
-				DashIconify(icon="mdi:dna", width=32, className="me-3", style={"color": "#00BCD4"}),
+				DashIconify(icon="mdi:dna", width=32, className="me-3"),
 				"Panel Builder"
-			], className="app-title mb-0", style={"fontSize": "2rem"}),
+			], className="fw-bold text-primary mb-0", style={"fontSize": "2rem"}),
 		])
 	], className="glass-card app-header", style={"padding": "1.2rem"})
 

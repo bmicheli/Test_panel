@@ -247,7 +247,7 @@ app.layout = dbc.Container([
 						dbc.Button("Export Genes", id="export-genes-btn", color="success")
 					], style={"textAlign": "center", "marginBottom": "15px"}),
 					html.Div([
-						html.Label("Panel Summary:", style={"fontWeight": "bold", "marginBottom": "8px", "fontSize": "14px"}),
+						html.Label("Panel Summary:", className="fw-bold text-primary", style={"marginBottom": "8px", "fontSize": "14px"}),
 						dcc.Textarea(id="panel-summary-output", 
 									style={"width": "100%", "height": "70px", 
 										"margin": "0 auto", "display": "block",
@@ -1605,7 +1605,7 @@ def create_enhanced_panel_visualization(df_unique, gene_sets, panel_names, panel
 			}),
 			dcc.Interval(
 				id="clear-search-result",
-				interval=5*1000,  # 10 secondes
+				interval=5*1000,  # 5 secondes
 				n_intervals=0,
 				disabled=True  # Désactivé par défaut
 			)
@@ -1649,7 +1649,6 @@ def create_enhanced_panel_visualization(df_unique, gene_sets, panel_names, panel
 	], className="glass-card fade-in-up mb-4")
 	
 	return main_layout
-
 @app.callback(
 	Output("table-per-confidence", "children"),
 	Input({"type": "btn-confidence", "level": ALL}, "n_clicks"),
