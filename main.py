@@ -1534,6 +1534,21 @@ def create_enhanced_panel_visualization(df_unique, gene_sets, panel_names, panel
 		
 		stat_cards.append(conf_card)
 	
+	# Card HPO terms
+	hpo_card = dbc.Card([
+		dbc.CardBody([
+			html.Div([
+				DashIconify(icon="mdi:medical-bag", width=20, className="me-2", style={"color": "#17a2b8"}),
+				html.Div([
+					html.H5(id="hpo-count-display", children="0", className="mb-0", style={"color": "#17a2b8", "fontWeight": "bold"}),
+					html.Small("HPO Terms", className="text-muted", style={"fontSize": "10px"})
+				])
+			], className="d-flex align-items-center")
+		], style={"padding": "0.75rem"})
+	], className="glass-card", style={"border": "2px solid #17a2b8", "borderRadius": "8px"})
+	
+	stat_cards.append(hpo_card)
+	
 	# Créer les boutons de niveau de confiance
 	confidence_levels_present = sorted(df_unique["Confidence"].unique(), reverse=True)
 	buttons = []
@@ -1612,6 +1627,14 @@ def create_enhanced_panel_visualization(df_unique, gene_sets, panel_names, panel
 		], width=12)
 	], className="mt-2")
 
+	# Calculer le nombre de colonnes dynamiquement
+	num_cards = len(stat_cards)
+	if num_cards <= 4:
+		card_width = 3
+	elif num_cards == 5:
+		card_width = int(12 / 5)  # 2.4 arrondi à 2
+	else:
+		card_width = 2
 	
 	# Layout principal avec fond uniforme
 	main_layout = dbc.Card([
@@ -1624,14 +1647,9 @@ def create_enhanced_panel_visualization(df_unique, gene_sets, panel_names, panel
 				"fontSize": "18px"
 			}),
 			
-			# Statistiques en grille
+			# Statistiques en une seule ligne
 			dbc.Row([
-				dbc.Col(stat_cards[0], width=3),  # Total
-				dbc.Col([
-					dbc.Row([
-						dbc.Col(stat_cards[i], width=3) for i in range(1, min(len(stat_cards), 5))
-					])
-				], width=9)
+				dbc.Col(card, width=card_width) for card in stat_cards
 			], className="mb-4"),
 			
 			# Section de recherche et boutons
@@ -1649,6 +1667,16 @@ def create_enhanced_panel_visualization(df_unique, gene_sets, panel_names, panel
 	], className="glass-card fade-in-up mb-4")
 	
 	return main_layout
+@app.callback(
+	Output("hpo-count-display", "children"),
+	Input("hpo-search-dropdown", "value"),
+	prevent_initial_call=True
+)
+def update_hpo_count(selected_hpo_terms):
+	if not selected_hpo_terms:
+		return "0"
+	return str(len(selected_hpo_terms))
+
 @app.callback(
 	Output("table-per-confidence", "children"),
 	Input({"type": "btn-confidence", "level": ALL}, "n_clicks"),
