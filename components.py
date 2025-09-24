@@ -216,157 +216,156 @@ def create_options_card():
 	], className="glass-card mb-3 fade-in-up")
 
 def create_enhanced_hpo_suggestion_card(hpo_term, keyword, suggestion_number, total_suggestions, confidence_score=None):
-	if confidence_score and confidence_score >= 8:
-		border_color = "rgba(40, 167, 69, 0.4)" 
-		bg_color = "rgba(212, 237, 218, 0.3)"
-		confidence_icon = "bi bi-check-circle-fill"
-		confidence_color = "#28a745"
-	elif confidence_score and confidence_score >= 5:
-		border_color = "rgba(255, 193, 7, 0.4)"
-		bg_color = "rgba(255, 248, 225, 0.3)"
-		confidence_icon = "bi bi-info-circle-fill"
-		confidence_color = "#ffc107"
-	else:
-		border_color = "rgba(0, 188, 212, 0.3)"
-		bg_color = "rgba(248, 249, 250, 0.5)"
-		confidence_icon = "bi bi-question-circle-fill"
-		confidence_color = "#6c757d"
-	
-	return html.Div([
-		html.Div([
-			html.Div([
-				html.Div([
-					html.I(className=confidence_icon, style={"color": confidence_color, "fontSize": "14px"}),
-					html.Small(f"from '{keyword}'", style={
-						"fontSize": "9px", 
-						"color": "#6c757d", 
-						"marginLeft": "4px",
-						"fontStyle": "italic"
-					})
-				], style={
-					"display": "flex", 
-					"alignItems": "center", 
-					"marginBottom": "4px",
-					"height": "15px"
-				}),
-			], style={"marginBottom": "6px"}),
+    if confidence_score and confidence_score >= 8:
+        border_color = "rgba(40, 167, 69, 0.4)" 
+        bg_color = "rgba(212, 237, 218, 0.3)"
+        confidence_icon = "bi bi-check-circle-fill"
+        confidence_color = "#28a745"
+    elif confidence_score and confidence_score >= 5:
+        border_color = "rgba(255, 193, 7, 0.4)"
+        bg_color = "rgba(255, 248, 225, 0.3)"
+        confidence_icon = "bi bi-info-circle-fill"
+        confidence_color = "#ffc107"
+    else:
+        border_color = "rgba(0, 188, 212, 0.3)"
+        bg_color = "rgba(248, 249, 250, 0.5)"
+        confidence_icon = "bi bi-question-circle-fill"
+        confidence_color = "#6c757d"
+    
+    return html.Div([
+        html.Div([
+            html.Div([
+                html.Div([
+                    html.I(className=confidence_icon, style={"color": confidence_color, "fontSize": "14px"}),
+                    html.Small(f"from '{keyword}'", style={
+                        "fontSize": "9px", 
+                        "color": "#6c757d", 
+                        "marginLeft": "4px",
+                        "fontStyle": "italic"
+                    })
+                ], style={
+                    "display": "flex", 
+                    "alignItems": "center", 
+                    "marginBottom": "4px",
+                    "height": "15px"
+                }),
+            ], style={"marginBottom": "6px"}),
 
-			html.Div([
-				html.Strong(hpo_term["name"], 
-						style={
-							"fontSize": "14px",
-							"color": "#2c3e50", 
-							"display": "block", 
-							"marginBottom": "6px", 
-							"lineHeight": "1.3", 
-							"textAlign": "center", 
-							"fontWeight": "600",
-							"wordWrap": "break-word",
-							"overflow": "hidden",
-							"hyphens": "auto",  
-							"padding": "0 4px"
-						})
-			], style={
-				"marginBottom": "8px", 
-				"height": "55px",  
-				"display": "flex", 
-				"alignItems": "center", 
-				"justifyContent": "center",
-				"overflow": "hidden"
-			}),
-			
-			html.Div([
-				dbc.Button(
-					html.I(className="bi bi-x-lg", style={"fontSize": "14px"}),  # croix
-					id={"type": "horizontal-hpo-skip-btn", "hpo_id": hpo_term["id"], "keyword": keyword},
-					color="danger",
-					size="sm",
-					style={
-						"borderRadius": "4px", 
-						"width": "28px",
-						"height": "28px", 
-						"padding": "0",
-						"display": "flex",
-						"alignItems": "center",
-						"justifyContent": "center",
-						"backgroundColor": "#dc3545",
-						"borderColor": "#dc3545",
-						"flexShrink": "0" 
-					},
-					title="Skip this suggestion",
-					n_clicks=0
-				),
+            html.Div([
+                html.Strong(hpo_term["name"], 
+                        style={
+                            "fontSize": "14px",
+                            "color": "#2c3e50", 
+                            "display": "block", 
+                            "marginBottom": "6px", 
+                            "lineHeight": "1.3", 
+                            "textAlign": "center", 
+                            "fontWeight": "600",
+                            "wordWrap": "break-word",
+                            "overflow": "hidden",
+                            "hyphens": "auto",  
+                            "padding": "0 4px"
+                        })
+            ], style={
+                "marginBottom": "8px", 
+                "height": "55px",  
+                "display": "flex", 
+                "alignItems": "center", 
+                "justifyContent": "center",
+                "overflow": "hidden"
+            }),
+            
+            html.Div([
+                dbc.Button(
+                    html.I(className="bi bi-x-lg", style={"fontSize": "14px"}),
+                    id={"type": "horizontal-hpo-skip-btn", "hpo_id": hpo_term["id"], "keyword": keyword},
+                    color="danger",
+                    size="sm",
+                    style={
+                        "borderRadius": "4px", 
+                        "width": "28px",
+                        "height": "28px", 
+                        "padding": "0",
+                        "display": "flex",
+                        "alignItems": "center",
+                        "justifyContent": "center",
+                        "backgroundColor": "#dc3545",
+                        "borderColor": "#dc3545",
+                        "flexShrink": "0" 
+                    },
+                    title="Skip this suggestion",
+                    n_clicks=0
+                ),
 
-				html.Code(hpo_term['id'], style={
-					"fontSize": "11px",
-					"backgroundColor": "#e3f2fd", 
-					"padding": "4px 8px",
-					"borderRadius": "4px", 
-					"display": "flex",
-					"alignItems": "center",
-					"justifyContent": "center",
-					"textAlign": "center", 
-					"color": "#1976d2", 
-					"fontWeight": "500",
-					"margin": "0 8px",  
-					"minWidth": "70px",  
-					"flexGrow": "1" 
-				}),
+                html.Code(hpo_term['id'], style={
+                    "fontSize": "11px",
+                    "backgroundColor": "#e3f2fd", 
+                    "padding": "4px 8px",
+                    "borderRadius": "4px", 
+                    "display": "flex",
+                    "alignItems": "center",
+                    "justifyContent": "center",
+                    "textAlign": "center", 
+                    "color": "#1976d2", 
+                    "fontWeight": "500",
+                    "margin": "0 8px",  
+                    "minWidth": "70px",  
+                    "flexGrow": "1" 
+                }),
 
-				dbc.Button(
-					html.I(className="bi bi-check-lg", style={"fontSize": "14px"}),  # check
-					id={"type": "horizontal-hpo-keep-btn", "hpo_id": hpo_term["id"], "keyword": keyword},
-					color="success",
-					size="sm",
-					style={
-						"borderRadius": "4px", 
-						"width": "28px",
-						"height": "28px", 
-						"padding": "0",
-						"display": "flex",
-						"alignItems": "center",
-						"justifyContent": "center",
-						"backgroundColor": "#28a745",
-						"borderColor": "#28a745",
-						"flexShrink": "0"  
-					},
-					title="Add to HPO terms",
-					n_clicks=0
-				)
-			], style={
-				"display": "flex", 
-				"alignItems": "center",
-				"justifyContent": "space-between",
-				"height": "32px",
-				"width": "100%"
-			})
-		], style={
-			"display": "flex",
-			"flexDirection": "column",
-			"height": "100%",
-			"justifyContent": "space-between",
-			"padding": "8px"
-		})
-	], 
-	id=f"horizontal-hpo-suggestion-{hpo_term['id']}",
-	className="horizontal-hpo-card",
-	style={
-		"background": f"linear-gradient(135deg, #ffffff 0%, {bg_color} 100%)",
-		"border": f"2px solid {border_color}",
-		"borderRadius": "8px",
-		"boxShadow": f"0 2px 6px {border_color}",
-		"transition": "all 0.2s ease",
-		"height": "120px",
-		"width": "calc(33.33% - 8px)", 
-		"minWidth": "200px",  
-		"maxWidth": "250px",  
-		"display": "flex",
-		"flexDirection": "column",
-		"overflow": "visible",
-		"margin": "1px",  
-		"flexShrink": "0"
-	})
-
+                dbc.Button(
+                    html.I(className="bi bi-check-lg", style={"fontSize": "14px"}),
+                    id={"type": "horizontal-hpo-keep-btn", "hpo_id": hpo_term["id"], "keyword": keyword},
+                    color="success",
+                    size="sm",
+                    style={
+                        "borderRadius": "4px", 
+                        "width": "28px",
+                        "height": "28px", 
+                        "padding": "0",
+                        "display": "flex",
+                        "alignItems": "center",
+                        "justifyContent": "center",
+                        "backgroundColor": "#28a745",
+                        "borderColor": "#28a745",
+                        "flexShrink": "0"  
+                    },
+                    title="Add to HPO terms",
+                    n_clicks=0
+                )
+            ], style={
+                "display": "flex", 
+                "alignItems": "center",
+                "justifyContent": "space-between",
+                "height": "32px",
+                "width": "100%"
+            })
+        ], style={
+            "display": "flex",
+            "flexDirection": "column",
+            "height": "100%",
+            "justifyContent": "space-between",
+            "padding": "8px"
+        })
+    ], 
+    id=f"horizontal-hpo-suggestion-{hpo_term['id']}",
+    className="horizontal-hpo-card",
+    style={
+        "background": f"linear-gradient(135deg, #ffffff 0%, {bg_color} 100%)",
+        "border": f"2px solid {border_color}",
+        "borderRadius": "8px",
+        "boxShadow": f"0 2px 6px {border_color}",
+        "transition": "all 0.2s ease",
+        "height": "120px",
+        "width": "calc(33.33% - 8px)", 
+        "minWidth": "200px",  
+        "maxWidth": "250px",  
+        "display": "flex",
+        "flexDirection": "column",
+        "overflow": "visible",
+        "margin": "1px",  
+        "flexShrink": "0"
+    })
 def create_action_buttons():
 	return dbc.Card([
 		dbc.CardBody([
@@ -409,7 +408,6 @@ def generate_panel_pie_chart(panel_df, panel_name, version=None):
 	if version:
 		title += f" (v{version})"
 
-#	ax.set_title(title, fontsize=16, fontweight='bold', color='#2c3e50', pad=20)
 	
 	buf = io.BytesIO()
 	plt.tight_layout()
@@ -419,7 +417,6 @@ def generate_panel_pie_chart(panel_df, panel_name, version=None):
 	data = base64.b64encode(buf.getbuffer()).decode("ascii")
 	
 	return html.Div([
-#		html.H4(title, className="text-center mb-3", style={"fontSize": "16px"}),
 		html.Img(src=f"data:image/png;base64,{data}", 
 				style={"maxWidth": "100%", "height": "auto", "display": "block", "margin": "auto"})
 	], style={

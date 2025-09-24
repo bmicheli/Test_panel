@@ -1187,12 +1187,10 @@ def display_panel_genes_optimized(n_clicks, selected_uk_ids, selected_au_ids,
 		"phenotypes": "Phenotypes"
 	})
 
-	total_genes = pd.DataFrame({"Number of genes in panel": [df_unique.shape[0]]})
-	summary = df_unique.groupby("Confidence").size().reset_index(name="Number of genes")
-	summary_table = dbc.Row([
-		dbc.Col(dash_table.DataTable(columns=[{"name": col, "id": col} for col in total_genes.columns], data=total_genes.to_dict("records"), style_cell={"textAlign": "left"}, style_table={"marginBottom": "20px", "width": "100%"}), width=4),
-		dbc.Col(dash_table.DataTable(columns=[{"name": col, "id": col} for col in ["Confidence", "Number of genes"]], data=summary.to_dict("records"), style_cell={"textAlign": "left"}, style_table={"width": "100%"}), width=8)
-	])
+	# Créer la visualisation du panel personnalisé
+	panel_viz_component = create_enhanced_panel_visualization(
+		df_unique, gene_sets, panel_names, panel_versions
+	)
 
 	venn_component = html.Div()
 	all_sets = {k: v for k, v in gene_sets.items() if len(v) > 0}
@@ -1470,31 +1468,7 @@ def display_panel_genes_optimized(n_clicks, selected_uk_ids, selected_au_ids,
 
 	table_output = html.Div(id="table-per-confidence")
 
-	summary_layout = dbc.Card([
-		dbc.CardBody([
-			html.Div(summary_table, id="summary-table-content", style={"marginBottom": "20px"}),
-			
-			dbc.Row([
-				dbc.Col([
-					dbc.InputGroup([
-						dbc.Input(id="gene-check-input", type="text", placeholder="Search for a gene in custom panel...", className="form-control", debounce=True, n_submit=0),
-						dbc.Button("Search", id="gene-check-btn", color="secondary", n_clicks=0)
-					])
-				], width=6),
-				dbc.Col([
-					html.Div(id="gene-check-result", className="mt-2", style={"fontStyle": "italic"})
-				], width=3),
-				dbc.Col([
-					html.Div(buttons, id="confidence-buttons-container", style={"display": "flex", "flexWrap": "wrap", "gap": "5px"})
-				], width=3)
-			], style={"marginTop": "10px"})
-		], style={"padding": "1rem"})
-	], className="glass-card fade-in-up", style={"marginBottom": "20px"})
-
-	return (html.Div([
-			html.Div(summary_layout, className="mb-3"),
-			html.Div(table_output, style={"marginBottom": "30px"}) 
-		]), 
+	return (panel_viz_component, 
 		venn_component, 
 		hpo_table_component,  
 		df_unique["Gene Symbol"].tolist(),
@@ -1503,23 +1477,178 @@ def display_panel_genes_optimized(n_clicks, selected_uk_ids, selected_au_ids,
 		"",
 		tables_by_level)
 
-@app.callback(
-	Output("gene-check-result", "children"),
-	Output("gene-check-input", "value"),
-	Input("gene-check-btn", "n_clicks"),
-	Input("gene-check-input", "n_submit"),
-	State("gene-check-input", "value"),
-	State("gene-list-store", "data"),
-	prevent_initial_call=True
-)
-def check_gene_in_panel(n_clicks, n_submit, gene_name, gene_list):
-	if not gene_name or not gene_list:
-		return "", ""
+def create_enhanced_panel_visualization(df_unique, gene_sets, panel_names, panel_versions):
+	"""Create an enhanced visual representation of the custom panel"""
 	
-	if gene_name.upper() in [g.upper() for g in gene_list]:
-		return f"✅ Gene '{gene_name}' is present in the custom panel.", ""
-	else:
-		return f"🚫 Gene '{gene_name}' is NOT present in the custom panel.", ""
+	total_genes = len(df_unique)
+	confidence_summary = df_unique.groupby("Confidence").size().reset_index(name="Count")
+	
+	# Créer les statistiques par confidence
+	conf_stats = {}
+	for _, row in confidence_summary.iterrows():
+		conf_level = row["Confidence"]
+		count = row["Count"]
+		percentage = round((count / total_genes) * 100, 1) if total_genes > 0 else 0
+		conf_stats[conf_level] = {"count": count, "percentage": percentage}
+	
+	# Créer les cards de statistiques
+	stat_cards = []
+	
+	# Card total avec couleur primaire
+	total_card = dbc.Card([
+		dbc.CardBody([
+			html.Div([
+				DashIconify(icon="mdi:dna", width=24, className="me-2 fw-bold text-primary"),
+				html.Div([
+					html.H4(str(total_genes), className="mb-0 fw-bold text-primary"),
+					html.Small("Total Genes", className="fw-bold text-primary")
+				])
+			], className="d-flex align-items-center")
+		])
+	], className="glass-card mb-2", style={"border": "2px solid #0d6efd", "borderRadius": "10px"})
+	
+	stat_cards.append(total_card)
+	
+	# Cards par niveau de confidence
+	confidence_colors = {3: "#28a745", 2: "#ffc107", 1: "#dc3545", 0: "#6c757d"}
+	confidence_labels = {3: "High", 2: "Medium", 1: "Low", 0: "Manual"}
+	confidence_icons = {3: "mdi:check-circle", 2: "mdi:alert-circle", 1: "mdi:close-circle", 0: "mdi:pencil"}
+	
+	for conf_level in sorted(conf_stats.keys(), reverse=True):
+		stats = conf_stats[conf_level]
+		color = confidence_colors.get(conf_level, "#6c757d")
+		label = confidence_labels.get(conf_level, f"Level {conf_level}")
+		icon = confidence_icons.get(conf_level, "mdi:circle")
+		
+		conf_card = dbc.Card([
+			dbc.CardBody([
+				html.Div([
+					DashIconify(icon=icon, width=20, className="me-2", style={"color": color}),
+					html.Div([
+						html.H5(f"{stats['count']}", className="mb-0", style={"color": color, "fontWeight": "bold"}),
+						html.Small(f"{label} ({stats['percentage']}%)", className="text-muted", style={"fontSize": "10px"})
+					])
+				], className="d-flex align-items-center")
+			], style={"padding": "0.75rem"})
+		], className="glass-card", style={"border": f"2px solid {color}", "borderRadius": "8px"})
+		
+		stat_cards.append(conf_card)
+	
+	# Créer les boutons de niveau de confiance
+	confidence_levels_present = sorted(df_unique["Confidence"].unique(), reverse=True)
+	buttons = []
+	
+	for level in confidence_levels_present:
+		if level == 3:
+			button_color = "success"
+		elif level == 2:
+			button_color = "warning"
+		elif level == 1:
+			button_color = "danger"  
+		else:
+			button_color = "secondary"
+			
+		button = dbc.Button(
+			f"Gene list details", 
+			id={"type": "btn-confidence", "level": str(level)}, 
+			color=button_color, 
+			className="me-1 mb-1", 
+			n_clicks=0,
+			size="sm"
+		)
+		buttons.append(button)
+	
+	# Section de recherche et boutons
+	search_section = dbc.Row([
+		dbc.Col([
+			html.Label("Search Gene in Panel:", className="fw-bold text-primary mb-2", style={"fontSize": "13px"}),
+			dbc.InputGroup([
+				dbc.Input(
+					id="gene-check-input", 
+					type="text", 
+					placeholder="Enter gene symbol...", 
+					className="form-control", 
+					debounce=True, 
+					n_submit=0,
+					style={"fontSize": "13px"}
+				),
+				dbc.Button(
+					[DashIconify(icon="mdi:magnify", width=16)], 
+					id="gene-check-btn", 
+					color="primary", 
+					n_clicks=0,
+					style={"fontSize": "13px"}
+				)
+			], className="mb-2")
+		], width=6),
+		dbc.Col([
+			html.Label("Gene List Details:", className="fw-bold text-primary mb-2", style={"fontSize": "13px"}),
+			html.Div(buttons, style={
+				"display": "flex", 
+				"flexWrap": "wrap", 
+				"gap": "5px"
+			})
+		], width=6)
+	])
+	
+	# Section de résultats de recherche sans fond
+	search_result_section = dbc.Row([
+		dbc.Col([
+			html.Div(id="gene-check-result", className="mt-2", style={
+				"fontStyle": "italic",
+				"fontSize": "13px",
+				"padding": "8px",
+				"borderRadius": "6px",
+				"minHeight": "40px",
+				"display": "flex",
+				"alignItems": "center"
+			}),
+			dcc.Interval(
+				id="clear-search-result",
+				interval=5*1000,  # 10 secondes
+				n_intervals=0,
+				disabled=True  # Désactivé par défaut
+			)
+		], width=12)
+	], className="mt-2")
+
+	
+	# Layout principal avec fond uniforme
+	main_layout = dbc.Card([
+		dbc.CardBody([
+			# Titre sans header séparé
+			html.H4([
+				DashIconify(icon="mdi:view-dashboard", width=24, className="me-2"),
+				"Your Custom Panel"
+			], className="fw-bold text-primary mb-4", style={
+				"fontSize": "18px"
+			}),
+			
+			# Statistiques en grille
+			dbc.Row([
+				dbc.Col(stat_cards[0], width=3),  # Total
+				dbc.Col([
+					dbc.Row([
+						dbc.Col(stat_cards[i], width=3) for i in range(1, min(len(stat_cards), 5))
+					])
+				], width=9)
+			], className="mb-4"),
+			
+			# Section de recherche et boutons
+			search_section,
+			
+			# Résultats de recherche
+			search_result_section,
+			
+			# Section table avec wrapper pour le bouton de fermeture
+			html.Div([
+				html.Div(id="table-per-confidence", className="mt-3")
+			], id="table-wrapper", style={"position": "relative"})
+			
+		], style={"padding": "1.5rem"})
+	], className="glass-card fade-in-up mb-4")
+	
+	return main_layout
 
 @app.callback(
 	Output("table-per-confidence", "children"),
@@ -1539,7 +1668,94 @@ def update_table_by_confidence(btn_clicks, data):
 	triggered_dict = json.loads(triggered)
 	level = triggered_dict["level"]
 	
-	return data.get(level, "")
+	table_content = data.get(level, "")
+	
+	if table_content:
+		# Retourner la table avec le bouton de fermeture
+		return html.Div([
+			# Bouton de fermeture
+			html.Div([
+				dbc.Button(
+					"×",  # Vraie croix
+					id="close-gene-table-btn",
+					size="sm",
+					style={
+						"position": "absolute",
+						"right": "10px",
+						"top": "-15px",
+						"zIndex": "1000",
+						"border": "none",
+						"backgroundColor": "#00BCD4",  # Même couleur que le bouton search
+						"color": "white",
+						"borderRadius": "8px",  # Coins arrondis comme le bouton search
+						"width": "30px",
+						"height": "30px",
+						"padding": "0",
+						"display": "flex",
+						"alignItems": "center",
+						"justifyContent": "center",
+						"boxShadow": "0 2px 4px rgba(0, 188, 212, 0.3)",
+						"cursor": "pointer",
+						"fontSize": "18px",
+						"fontWeight": "bold",
+						"lineHeight": "1"
+					},
+					n_clicks=0,
+					title="Close gene table"
+				)
+			], style={"position": "relative", "height": "15px", "marginBottom": "10px"}),
+			# Table
+			table_content
+		], style={"position": "relative"})
+	
+	return table_content
+@app.callback(
+	Output("table-per-confidence", "children", allow_duplicate=True),
+	Input("close-gene-table-btn", "n_clicks"),
+	prevent_initial_call=True
+)
+def close_gene_table_only(n_clicks):
+	if n_clicks:
+		return ""
+	raise dash.exceptions.PreventUpdate
+
+@app.callback(
+	Output("clear-search-result", "disabled"),
+	[Input("gene-check-result", "children")],
+	prevent_initial_call=True
+)
+def manage_search_timer(search_result):
+	# Active le timer seulement s'il y a un résultat
+	if search_result and search_result != "":
+		return False  # Active le timer
+	return True  # Désactive le timer
+
+@app.callback(
+	[Output("gene-check-result", "children"),
+	Output("gene-check-input", "value")],
+	[Input("gene-check-btn", "n_clicks"),
+	Input("gene-check-input", "n_submit"),
+	Input("clear-search-result", "n_intervals")],
+	[State("gene-check-input", "value"),
+	State("gene-list-store", "data")],
+	prevent_initial_call=True
+)
+def check_gene_in_panel(n_clicks, n_submit, n_intervals, gene_name, gene_list):
+	ctx = callback_context
+	
+	# Si c'est le timer qui se déclenche, effacer le résultat
+	if ctx.triggered[0]["prop_id"] == "clear-search-result.n_intervals":
+		return "", dash.no_update
+	
+	if not gene_name or not gene_list:
+		return "", ""
+	
+	if gene_name.upper() in [g.upper() for g in gene_list]:
+		result = f"✅ Gene '{gene_name}' is present in the custom panel."
+	else:
+		result = f"🚫 Gene '{gene_name}' is NOT present in the custom panel."
+	
+	return result, ""
 
 @app.callback(
     Output("panel-summary-output", "value", allow_duplicate=True),
@@ -1549,7 +1765,7 @@ def update_table_by_confidence(btn_clicks, data):
     State("dropdown-internal", "value"),
     State("confidence-filter", "value"),
     State("manual-genes", "value"),
-    State("hpo-search-dropdown", "value"),  # AJOUT: État des HPO terms
+    State("hpo-search-dropdown", "value"),
     prevent_initial_call=True
 )
 def create_panel_summary_callback(n_clicks, uk_ids, au_ids, internal_ids, confs, manual, hpo_terms):
@@ -1558,7 +1774,6 @@ def create_panel_summary_callback(n_clicks, uk_ids, au_ids, internal_ids, confs,
         
     manual_list = [g.strip() for g in manual.strip().splitlines() if g.strip()] if manual else []
     
-    # MODIFICATION: Passer les HPO terms à la fonction
     summary = generate_panel_summary(
         uk_ids or [], 
         au_ids or [], 
@@ -1568,7 +1783,7 @@ def create_panel_summary_callback(n_clicks, uk_ids, au_ids, internal_ids, confs,
         panels_uk_df, 
         panels_au_df, 
         internal_panels,
-        hpo_terms or []  # AJOUT: Inclure les HPO terms
+        hpo_terms or []
     )
     
     return summary
